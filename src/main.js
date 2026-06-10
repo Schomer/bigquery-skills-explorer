@@ -37,12 +37,14 @@ import { DashboardView } from './views/DashboardView.js';
 // Datasets
 import bigquerySkillsData from './data/skills.json';
 import dataAgentSkillsData from './data/data-agent-skills.json';
+import googleCloudSkillsData from './data/google-cloud-skills.json';
 
 // ─── Dataset Registry ───────────────────────────────────────────
 
 const DATASETS = {
   'bigquery': bigquerySkillsData,
   'data-agent': dataAgentSkillsData,
+  'google-cloud': googleCloudSkillsData,
 };
 
 let activeSkillset = 'bigquery';

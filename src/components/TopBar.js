@@ -21,16 +21,20 @@ export class TopBar {
   }
 
   render() {
-    const skillsetLabel = this.activeSkillset === 'bigquery' ? 'BigQuery Skills' : 'Data Agent Skills';
-    const skillsetIcon = this.activeSkillset === 'bigquery' ? 'database' : 'smart_toy';
+    const SKILLSET_META = {
+      'bigquery': { label: 'BigQuery Skills', icon: 'database' },
+      'data-agent': { label: 'Data Agent Kit', icon: 'smart_toy' },
+      'google-cloud': { label: 'Google Cloud Skills', icon: 'cloud' },
+    };
+    const meta = SKILLSET_META[this.activeSkillset] || SKILLSET_META['bigquery'];
 
     this.container.innerHTML = `
       <div class="top-bar__logo">
-        <span class="material-symbols-outlined top-bar__logo-icon">${skillsetIcon}</span>
+        <span class="material-symbols-outlined top-bar__logo-icon">${meta.icon}</span>
         <span class="top-bar__title">Skill Explorer</span>
         <div class="top-bar__skillset-selector" id="skillset-selector">
           <button class="top-bar__skillset-btn" id="skillset-btn" aria-haspopup="true" aria-expanded="false">
-            <span class="top-bar__skillset-label">${skillsetLabel}</span>
+            <span class="top-bar__skillset-label">${meta.label}</span>
             <span class="material-symbols-outlined top-bar__skillset-arrow">expand_more</span>
           </button>
           <div class="top-bar__skillset-menu" id="skillset-menu">
@@ -47,15 +51,24 @@ export class TopBar {
                  data-skillset="data-agent">
               <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-green);">smart_toy</span>
               <div class="top-bar__skillset-menu-content">
-                <div class="top-bar__skillset-menu-name">Data Agent Skills</div>
-                <div class="top-bar__skillset-menu-desc">Antigravity agent skills for data development</div>
+                <div class="top-bar__skillset-menu-name">Data Agent Kit</div>
+                <div class="top-bar__skillset-menu-desc">Connectors and tools for building data agents</div>
               </div>
               ${this.activeSkillset === 'data-agent' ? '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--google-blue);">check</span>' : ''}
+            </div>
+            <div class="top-bar__skillset-menu-item ${this.activeSkillset === 'google-cloud' ? 'top-bar__skillset-menu-item--active' : ''}"
+                 data-skillset="google-cloud">
+              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-yellow);">cloud</span>
+              <div class="top-bar__skillset-menu-content">
+                <div class="top-bar__skillset-menu-name">Google Cloud Skills</div>
+                <div class="top-bar__skillset-menu-desc">Cloud product skills — GKE, BigQuery, Firebase, Gemini</div>
+              </div>
+              ${this.activeSkillset === 'google-cloud' ? '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--google-blue);">check</span>' : ''}
             </div>
             <div class="top-bar__skillset-menu-divider"></div>
             <div class="top-bar__skillset-menu-footer">
               <span class="material-symbols-outlined" style="font-size: 16px;">info</span>
-              Source: <a href="https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/" target="_blank" rel="noopener">Antigravity Skills</a>
+              Source: <a href="https://github.com/google/skills/tree/main/skills/cloud" target="_blank" rel="noopener">google/skills</a>
             </div>
           </div>
         </div>
