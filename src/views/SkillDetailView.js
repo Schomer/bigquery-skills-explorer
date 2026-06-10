@@ -1,9 +1,10 @@
 /**
  * BQ Skill Explorer — Skill Detail View (Man Page)
+ * Shows skill documentation, metadata, and inline file viewer.
  */
 
 import { marked } from 'marked';
-import { codeViewer } from '../components/CodeViewerModal.js';
+import hljs from 'highlight.js';
 import { renderBreadcrumb } from '../components/Breadcrumb.js';
 
 const ASSET_ICONS = {
@@ -13,6 +14,27 @@ const ASSET_ICONS = {
   json: 'data_object',
   md: 'description',
   markdown: 'description',
+  yaml: 'settings',
+  yml: 'settings',
+  bzl: 'build',
+  sh: 'terminal',
+  txt: 'article',
+  bazel: 'build',
+};
+
+const LANG_MAP = {
+  python: 'python',
+  py: 'python',
+  sql: 'sql',
+  json: 'json',
+  yaml: 'yaml',
+  yml: 'yaml',
+  sh: 'bash',
+  bzl: 'python',
+  bazel: 'python',
+  md: 'markdown',
+  markdown: 'markdown',
+  txt: 'plaintext',
 };
 
 export class SkillDetailView {
@@ -26,6 +48,7 @@ export class SkillDetailView {
     this.skills = deps.skills;
     this.metaSkillRouters = deps.metaSkillRouters;
     this.router = deps.router;
+    this.activeAssetIndex = null;
 
     this.render();
   }
@@ -73,17 +96,83 @@ export class SkillDetailView {
             </div>
           </div>
           <div class="skill-detail__docs">${docHtml}</div>
+
+          ${skill.assets?.length ? `
+            <div class="skill-detail__files-section">
+              <h2 class="skill-detail__section-title">
+                <span class="material-symbols-outlined" style="color: var(--google-blue);">folder_open</span>
+                Files (${skill.assets.length})
+              </h2>
+              <div class="skill-detail__file-list" id="file-list">
+                ${skill.assets.map((asset, idx) => `
+                  <div class="skill-detail__file-item ${idx === 0 ? 'skill-detail__file-item--active' : ''}"
+                       data-asset-index="${idx}">
+                    <span class="material-symbols-outlined skill-detail__file-icon">${ASSET_ICONS[asset.type] || 'insert_drive_file'}</span>
+                    <span class="skill-detail__file-name">${asset.name}</span>
+                    <span class="skill-detail__file-type">${asset.type}</span>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="skill-detail__file-viewer" id="file-viewer">
+                ${this.renderFileContent(skill.assets[0], 0)}
+              </div>
+            </div>
+          ` : ''}
         </div>
         <div class="skill-detail__sidebar">
           ${this.renderMetadataCard(skill)}
           ${this.renderIOCard(skill)}
-          ${this.renderAssetsCard(skill)}
           ${this.renderRoutersCard(relatedRouters)}
         </div>
       </div>
     `;
 
+    this.activeAssetIndex = skill.assets?.length ? 0 : null;
     this.bindEvents();
+  }
+
+  renderFileContent(asset, index) {
+    if (!asset) return '';
+
+    const lang = LANG_MAP[asset.type] || 'plaintext';
+    const isMarkdown = asset.type === 'md' || asset.type === 'markdown';
+
+    let contentHtml;
+    if (isMarkdown) {
+      contentHtml = `
+        <div class="skill-detail__file-rendered-md">
+          ${marked.parse(asset.content || '')}
+        </div>
+      `;
+    } else {
+      let highlighted;
+      try {
+        highlighted = hljs.highlight(asset.content || '', { language: lang }).value;
+      } catch {
+        highlighted = hljs.highlightAuto(asset.content || '').value;
+      }
+      contentHtml = `<pre class="skill-detail__file-code"><code class="hljs language-${lang}">${highlighted}</code></pre>`;
+    }
+
+    const lineCount = (asset.content || '').split('\n').length;
+    const byteSize = new Blob([asset.content || '']).size;
+
+    return `
+      <div class="skill-detail__file-header">
+        <div class="skill-detail__file-header-left">
+          <span class="material-symbols-outlined" style="font-size: 18px; color: var(--on-surface-variant);">${ASSET_ICONS[asset.type] || 'insert_drive_file'}</span>
+          <span class="skill-detail__file-header-name">${asset.name}</span>
+        </div>
+        <div class="skill-detail__file-header-right">
+          <span class="skill-detail__file-stat">${lineCount} lines</span>
+          <span class="skill-detail__file-stat">${this.formatBytes(byteSize)}</span>
+          <span class="chip" style="font-size: 11px; padding: 2px 8px;">${lang}</span>
+        </div>
+      </div>
+      <div class="skill-detail__file-body">
+        ${contentHtml}
+      </div>
+    `;
   }
 
   renderMetadataCard(skill) {
@@ -122,6 +211,15 @@ export class SkillDetailView {
               <div class="skill-detail__meta-value">${skill.last_updated || 'Unknown'}</div>
             </div>
           </div>
+          ${skill.source_path ? `
+            <div class="skill-detail__meta-item">
+              <span class="material-symbols-outlined skill-detail__meta-icon">link</span>
+              <div>
+                <div class="skill-detail__meta-label">Source</div>
+                <div class="skill-detail__meta-value"><a href="${skill.source_path}" target="_blank" rel="noopener" style="color: var(--google-blue); font-size: var(--font-size-xs); word-break: break-all;">${skill.id}/</a></div>
+              </div>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -162,27 +260,6 @@ export class SkillDetailView {
     `;
   }
 
-  renderAssetsCard(skill) {
-    if (!skill.assets?.length) return '';
-
-    return `
-      <div class="card">
-        <div class="card__title">
-          <span class="material-symbols-outlined card__title-icon">code</span>
-          Assets (${skill.assets.length})
-        </div>
-        ${skill.assets.map((asset, idx) => `
-          <div class="skill-detail__asset" data-asset-index="${idx}">
-            <span class="material-symbols-outlined skill-detail__asset-icon">${ASSET_ICONS[asset.type] || 'insert_drive_file'}</span>
-            <span class="skill-detail__asset-name">${asset.name}</span>
-            <span class="skill-detail__asset-type">${asset.type}</span>
-            <span class="material-symbols-outlined" style="font-size: 18px; color: var(--on-surface-muted);">open_in_new</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
   renderRoutersCard(routers) {
     if (!routers.length) return '';
 
@@ -203,13 +280,26 @@ export class SkillDetailView {
   }
 
   bindEvents() {
-
-    // Asset clicks
-    this.container.querySelectorAll('.skill-detail__asset').forEach(el => {
+    // File item clicks — show content inline
+    this.container.querySelectorAll('.skill-detail__file-item').forEach(el => {
       el.addEventListener('click', () => {
         const idx = parseInt(el.dataset.assetIndex);
+        if (idx === this.activeAssetIndex) return;
+
+        this.activeAssetIndex = idx;
         const asset = this.skill.assets[idx];
-        if (asset) codeViewer.open(asset);
+
+        // Update active state
+        this.container.querySelectorAll('.skill-detail__file-item').forEach(item =>
+          item.classList.remove('skill-detail__file-item--active')
+        );
+        el.classList.add('skill-detail__file-item--active');
+
+        // Render file content
+        const viewer = this.container.querySelector('#file-viewer');
+        if (viewer && asset) {
+          viewer.innerHTML = this.renderFileContent(asset, idx);
+        }
       });
     });
 
@@ -219,6 +309,12 @@ export class SkillDetailView {
         this.router.navigate('/graph');
       });
     });
+  }
+
+  formatBytes(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   getTierName(tier) {

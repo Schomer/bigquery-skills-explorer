@@ -7,21 +7,47 @@
       "category": "data-safety",
       "owner": "data-agent-team",
       "description": "Prevents accidental data loss by validating destructive operations before execution. Checks DROP, DELETE, and TRUNCATE statements against safety policies.",
-      "symptoms": ["data loss", "accidental delete", "dropped table", "truncated data"],
+      "symptoms": [
+        "data loss",
+        "accidental delete",
+        "dropped table",
+        "truncated data"
+      ],
       "documentation": "# Accidental Data Loss Prevention\n\nThis skill intercepts potentially destructive operations and validates them against configurable safety policies before allowing execution.\n\n## Protected Operations\n\n- `DROP TABLE` / `DROP DATASET`\n- `DELETE FROM` without WHERE clause\n- `TRUNCATE TABLE`\n- Overwrites to production tables\n\n## Safety Checks\n\n1. **Scope Validation** — Ensures destructive ops target the intended resources\n2. **Backup Verification** — Confirms recent backups exist before allowing drops\n3. **Confirmation Prompt** — Requires explicit user confirmation for irreversible actions\n4. **Audit Logging** — Records all destructive operations for compliance\n\n## Configuration\n\n```yaml\nsafety_policies:\n  require_where_clause: true\n  require_backup_before_drop: true\n  protected_datasets:\n    - production\n    - analytics\n  max_delete_rows: 10000\n```",
       "assets": [
         {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for accidental_data_loss_prevention\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"accidental_data_loss_prevention\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"accidental_data_loss_prevention_test\",\n    srcs = [\"accidental_data_loss_prevention_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
+        {
           "name": "SKILL.md",
           "type": "markdown",
-          "content": "---\nname: accidental_data_loss_prevention\ndescription: Prevents accidental data loss by validating destructive operations\nmetadata:\n  version: 1.2.0\n---\n\n# Accidental Data Loss Prevention\n\nYou are a safety-focused agent skill that prevents accidental data loss..."
+          "content": "---\nname: accidental_data_loss_prevention\ndescription: Prevents accidental data loss by validating destructive operations before execution.\nmetadata:\n  version: 1.2.0\n  tier: 3\n  category: data-safety\n  owner: data-agent-team\ntriggers:\n  - \"DROP TABLE\"\n  - \"DROP DATASET\"\n  - \"DELETE FROM\"\n  - \"TRUNCATE TABLE\"\n---\n\n# Accidental Data Loss Prevention\n\nYou are a safety-focused agent skill that prevents accidental data loss in BigQuery environments.\n\n## Role\n\nWhen a user attempts to execute a destructive SQL operation, you MUST:\n\n1. **Identify the operation type** (DROP, DELETE, TRUNCATE)\n2. **Validate scope** - Ensure the operation targets the intended resources\n3. **Check for backups** - Verify recent snapshots or exports exist\n4. **Prompt for confirmation** - Require explicit confirmation before proceeding\n5. **Log the action** - Record the operation for audit compliance\n\n## Safety Rules\n\n- NEVER allow DROP TABLE on production datasets without explicit confirmation\n- ALWAYS require WHERE clause for DELETE operations\n- ALWAYS check if a recent backup exists before allowing DROP operations\n- Flag any operation that would affect more than 10,000 rows\n\n## Example Interaction\n\nUser: \"Drop the users table in production\"\n\nYou should respond:\n- Identify this as a high-risk DROP TABLE operation\n- Check for recent backups of the `users` table\n- List dependent views and downstream tables\n- Request explicit confirmation with the full table path"
+        },
+        {
+          "name": "accidental_data_loss_prevention_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the accidental_data_loss_prevention skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass AccidentalDataLossPreventionSkillTest(unittest.TestCase):\n    \"\"\"Test suite for accidental_data_loss_prevention skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"accidental_data_loss_prevention\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"accidental_data_loss_prevention\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["data_safety_orchestrator"],
-      "inputs": ["sql_statement", "target_dataset", "user_context"],
-      "outputs": ["validation_result", "safety_report", "confirmation_prompt"],
+      "meta_skill_routers": [
+        "data_safety_orchestrator"
+      ],
+      "inputs": [
+        "sql_statement",
+        "target_dataset",
+        "user_context"
+      ],
+      "outputs": [
+        "validation_result",
+        "safety_report",
+        "confirmation_prompt"
+      ],
       "last_updated": "2026-06-01",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/accidental_data_loss_prevention/"
     },
     {
       "id": "bigquery_data_transfer_service",
@@ -30,21 +56,48 @@
       "category": "data-pipeline",
       "owner": "data-agent-team",
       "description": "Assists with configuring, monitoring, and troubleshooting BigQuery Data Transfer Service (DTS) transfers from SaaS sources and cross-region copies.",
-      "symptoms": ["transfer failed", "DTS error", "data transfer stuck", "scheduled transfer"],
+      "symptoms": [
+        "transfer failed",
+        "DTS error",
+        "data transfer stuck",
+        "scheduled transfer"
+      ],
       "documentation": "# BigQuery Data Transfer Service\n\nHelps users configure and manage BigQuery Data Transfer Service for automated data movement.\n\n## Supported Sources\n\n- Google Ads\n- Google Analytics\n- YouTube\n- Amazon S3\n- Cross-region dataset copies\n- Scheduled queries\n\n## Capabilities\n\n- Create and configure new transfers\n- Monitor transfer run status\n- Debug transfer failures\n- Optimize transfer schedules",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for bigquery_data_transfer_service\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"bigquery_data_transfer_service\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"bigquery_data_transfer_service_test\",\n    srcs = [\"bigquery_data_transfer_service_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: bigquery_data_transfer_service\ndescription: Assists with BigQuery Data Transfer Service configuration and troubleshooting\nmetadata:\n  version: 2.0.1\n---\n\n# BigQuery Data Transfer Service Skill\n\nYou help users work with the BigQuery Data Transfer Service..."
+        },
+        {
+          "name": "bigquery_data_transfer_service_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the bigquery_data_transfer_service skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass BigqueryDataTransferServiceSkillTest(unittest.TestCase):\n    \"\"\"Test suite for bigquery_data_transfer_service skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"bigquery_data_transfer_service\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"bigquery_data_transfer_service\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["source_type", "project_id", "dataset_id", "schedule"],
-      "outputs": ["transfer_config", "status_report", "troubleshooting_guide"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "source_type",
+        "project_id",
+        "dataset_id",
+        "schedule"
+      ],
+      "outputs": [
+        "transfer_config",
+        "status_report",
+        "troubleshooting_guide"
+      ],
       "last_updated": "2026-05-28",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/bigquery_data_transfer_service/"
     },
     {
       "id": "building_data_apps",
@@ -53,21 +106,46 @@
       "category": "development",
       "owner": "data-agent-team",
       "description": "Guides users through building data-driven applications using BigQuery, Cloud Functions, and frontend frameworks. Covers architecture patterns and best practices.",
-      "symptoms": ["build data app", "connect BigQuery to frontend", "data visualization app"],
+      "symptoms": [
+        "build data app",
+        "connect BigQuery to frontend",
+        "data visualization app"
+      ],
       "documentation": "# Building Data Apps\n\nA comprehensive playbook for building production-ready data applications on Google Cloud.\n\n## Architecture Patterns\n\n1. **Direct Query** — Frontend queries BigQuery via REST API\n2. **Cached Layer** — Materialized views + Cloud Functions API\n3. **Real-time** — BigQuery subscriptions + Pub/Sub + WebSockets\n\n## Stack Recommendations\n\n| Layer | Technology |\n|-------|------------|\n| Frontend | React, Angular, or Vanilla JS |\n| API | Cloud Functions or Cloud Run |\n| Data | BigQuery + Materialized Views |\n| Auth | Firebase Auth / IAP |\n| Hosting | Firebase Hosting |",
       "assets": [
         {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for building_data_apps\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"building_data_apps\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"building_data_apps_test\",\n    srcs = [\"building_data_apps_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
+        {
           "name": "SKILL.md",
           "type": "markdown",
-          "content": "---\nname: building_data_apps\ndescription: Guides building data-driven applications on Google Cloud\nmetadata:\n  version: 1.0.0\n---\n\n# Building Data Apps\n\nYou are an expert at helping users build data-driven applications..."
+          "content": "---\nname: building_data_apps\ndescription: Guides users through building data-driven applications on Google Cloud.\nmetadata:\n  version: 1.0.0\n  tier: 3\n  category: development\n  owner: data-agent-team\ntriggers:\n  - \"build an app\"\n  - \"create a dashboard\"\n  - \"data application\"\n  - \"web app with BigQuery\"\n---\n\n# Building Data Apps\n\nYou are an expert at helping users build data-driven applications using Google Cloud services.\n\n## Architecture Patterns\n\nGuide users to choose the right architecture:\n\n### 1. Direct Query Pattern\n- Frontend queries BigQuery REST API directly\n- Best for: internal tools, low-traffic dashboards\n- Latency: 1-5 seconds\n\n### 2. Cached Layer Pattern\n- Materialized Views + Cloud Functions API layer\n- Best for: customer-facing apps, moderate traffic\n- Latency: 100-500ms\n\n### 3. Real-time Pattern\n- BigQuery subscriptions + Pub/Sub + WebSockets\n- Best for: live dashboards, monitoring\n- Latency: <1 second\n\n## Tech Stack Recommendations\n\n| Layer | Recommended | Alternative |\n|-------|------------|-------------|\n| Frontend | React + Vite | Angular, Vue |\n| API | Cloud Functions | Cloud Run |\n| Data | BigQuery + MV | Firestore cache |\n| Auth | Firebase Auth | IAP |\n| Hosting | Firebase Hosting | Cloud Run |\n\n## Key Principles\n\n1. Always use service accounts, never user credentials in apps\n2. Implement proper caching to avoid excessive BigQuery costs\n3. Use materialized views for frequently accessed aggregations\n4. Design for eventual consistency in data pipelines"
+        },
+        {
+          "name": "building_data_apps_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the building_data_apps skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass BuildingDataAppsSkillTest(unittest.TestCase):\n    \"\"\"Test suite for building_data_apps skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"building_data_apps\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"building_data_apps\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["development_orchestrator"],
-      "inputs": ["app_type", "data_source", "framework_preference"],
-      "outputs": ["architecture_plan", "code_scaffold", "deployment_config"],
+      "meta_skill_routers": [
+        "development_orchestrator"
+      ],
+      "inputs": [
+        "app_type",
+        "data_source",
+        "framework_preference"
+      ],
+      "outputs": [
+        "architecture_plan",
+        "code_scaffold",
+        "deployment_config"
+      ],
       "last_updated": "2026-05-20",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/building_data_apps/"
     },
     {
       "id": "data_autocleaning",
@@ -76,21 +154,49 @@
       "category": "data-quality",
       "owner": "data-agent-team",
       "description": "Automatically detects and suggests fixes for common data quality issues: null values, duplicates, type mismatches, outliers, and formatting inconsistencies.",
-      "symptoms": ["dirty data", "null values", "duplicates", "data quality", "type mismatch"],
+      "symptoms": [
+        "dirty data",
+        "null values",
+        "duplicates",
+        "data quality",
+        "type mismatch"
+      ],
       "documentation": "# Data Autocleaning\n\nAutomatically profiles datasets and suggests cleaning transformations.\n\n## Detection Capabilities\n\n- **Null/Missing Values** — Identifies columns with high null rates\n- **Duplicates** — Finds exact and fuzzy duplicate rows\n- **Type Mismatches** — Detects strings stored as numbers, etc.\n- **Outliers** — Statistical outlier detection (IQR, Z-score)\n- **Format Issues** — Inconsistent date formats, mixed case, whitespace\n\n## Cleaning Actions\n\n- COALESCE with defaults\n- DEDUP with window functions\n- CAST/SAFE_CAST for type correction\n- TRIM/LOWER/REGEXP_REPLACE for formatting",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for data_autocleaning\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"data_autocleaning\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"data_autocleaning_test\",\n    srcs = [\"data_autocleaning_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: data_autocleaning\ndescription: Automatically detects and fixes common data quality issues\nmetadata:\n  version: 1.5.0\n---\n\n# Data Autocleaning\n\nYou profile datasets and suggest cleaning transformations..."
+        },
+        {
+          "name": "data_autocleaning_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the data_autocleaning skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass DataAutocleaningSkillTest(unittest.TestCase):\n    \"\"\"Test suite for data_autocleaning skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"data_autocleaning\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"data_autocleaning\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["data_quality_orchestrator"],
-      "inputs": ["project_id", "dataset_id", "table_id", "cleaning_profile"],
-      "outputs": ["quality_report", "cleaning_sql", "summary_stats"],
+      "meta_skill_routers": [
+        "data_quality_orchestrator"
+      ],
+      "inputs": [
+        "project_id",
+        "dataset_id",
+        "table_id",
+        "cleaning_profile"
+      ],
+      "outputs": [
+        "quality_report",
+        "cleaning_sql",
+        "summary_stats"
+      ],
       "last_updated": "2026-06-03",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/data_autocleaning/"
     },
     {
       "id": "dataform_bigquery",
@@ -99,21 +205,47 @@
       "category": "data-pipeline",
       "owner": "data-agent-team",
       "description": "Helps users create, manage, and debug Dataform workflows in BigQuery, including SQLX definitions, assertions, and incremental tables.",
-      "symptoms": ["dataform error", "SQLX syntax", "incremental table", "dataform assertion"],
+      "symptoms": [
+        "dataform error",
+        "SQLX syntax",
+        "incremental table",
+        "dataform assertion"
+      ],
       "documentation": "# Dataform BigQuery\n\nAssists with Dataform development workflows within BigQuery.\n\n## Supported Operations\n\n- Creating SQLX table definitions\n- Writing assertions and data tests\n- Configuring incremental tables\n- Setting up dependencies and refs\n- Debugging compilation errors\n- Managing Dataform repositories",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for dataform_bigquery\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"dataform_bigquery\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"dataform_bigquery_test\",\n    srcs = [\"dataform_bigquery_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: dataform_bigquery\ndescription: Assists with Dataform workflows in BigQuery\nmetadata:\n  version: 2.1.0\n---\n\n# Dataform BigQuery\n\nYou are an expert at Dataform development in BigQuery..."
+        },
+        {
+          "name": "dataform_bigquery_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the dataform_bigquery skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass DataformBigquerySkillTest(unittest.TestCase):\n    \"\"\"Test suite for dataform_bigquery skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"dataform_bigquery\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"dataform_bigquery\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["repository_id", "workspace", "sqlx_content"],
-      "outputs": ["sqlx_definition", "assertion_code", "debug_report"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "repository_id",
+        "workspace",
+        "sqlx_content"
+      ],
+      "outputs": [
+        "sqlx_definition",
+        "assertion_code",
+        "debug_report"
+      ],
       "last_updated": "2026-05-25",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/dataform_bigquery/"
     },
     {
       "id": "dbt_bigquery",
@@ -122,21 +254,47 @@
       "category": "data-pipeline",
       "owner": "data-agent-team",
       "description": "Supports dbt (data build tool) development targeting BigQuery, including model creation, testing, documentation, and deployment workflows.",
-      "symptoms": ["dbt error", "dbt model", "dbt test failed", "dbt compile"],
+      "symptoms": [
+        "dbt error",
+        "dbt model",
+        "dbt test failed",
+        "dbt compile"
+      ],
       "documentation": "# dbt BigQuery\n\nComprehensive support for dbt development targeting BigQuery.\n\n## Capabilities\n\n- Model creation (views, tables, incremental, ephemeral)\n- Source and ref configuration\n- Schema tests (unique, not_null, relationships)\n- Custom tests and macros\n- profiles.yml configuration for BigQuery\n- dbt run/test/compile troubleshooting",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for dbt_bigquery\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"dbt_bigquery\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"dbt_bigquery_test\",\n    srcs = [\"dbt_bigquery_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: dbt_bigquery\ndescription: Supports dbt development targeting BigQuery\nmetadata:\n  version: 1.8.0\n---\n\n# dbt BigQuery\n\nYou are an expert dbt developer working with BigQuery..."
+        },
+        {
+          "name": "dbt_bigquery_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the dbt_bigquery skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass DbtBigquerySkillTest(unittest.TestCase):\n    \"\"\"Test suite for dbt_bigquery skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"dbt_bigquery\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"dbt_bigquery\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["dbt_project", "model_name", "error_log"],
-      "outputs": ["model_code", "test_definitions", "debug_steps"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "dbt_project",
+        "model_name",
+        "error_log"
+      ],
+      "outputs": [
+        "model_code",
+        "test_definitions",
+        "debug_steps"
+      ],
       "last_updated": "2026-05-30",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/dbt_bigquery/"
     },
     {
       "id": "developing_with_bigquery",
@@ -145,21 +303,47 @@
       "category": "development",
       "owner": "data-agent-team",
       "description": "General-purpose playbook for BigQuery development, covering SQL best practices, schema design, query optimization, and client library usage.",
-      "symptoms": ["how to BigQuery", "BigQuery best practices", "query optimization", "schema design"],
+      "symptoms": [
+        "how to BigQuery",
+        "BigQuery best practices",
+        "query optimization",
+        "schema design"
+      ],
       "documentation": "# Developing with BigQuery\n\nA comprehensive guide for developers working with BigQuery.\n\n## Topics Covered\n\n- SQL best practices and anti-patterns\n- Schema design (normalization vs. denormalization)\n- Partitioning and clustering strategies\n- Cost optimization techniques\n- Client library usage (Python, Java, Node.js, Go)\n- IAM and security configuration\n- Scheduled queries and workflows",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for developing_with_bigquery\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"developing_with_bigquery\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"developing_with_bigquery_test\",\n    srcs = [\"developing_with_bigquery_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: developing_with_bigquery\ndescription: General BigQuery development guidance and best practices\nmetadata:\n  version: 3.0.0\n---\n\n# Developing with BigQuery\n\nYou are a BigQuery development expert..."
+        },
+        {
+          "name": "developing_with_bigquery_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the developing_with_bigquery skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass DevelopingWithBigquerySkillTest(unittest.TestCase):\n    \"\"\"Test suite for developing_with_bigquery skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"developing_with_bigquery\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"developing_with_bigquery\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["development_orchestrator"],
-      "inputs": ["question", "code_context", "language_preference"],
-      "outputs": ["guidance", "code_example", "best_practices"],
+      "meta_skill_routers": [
+        "development_orchestrator"
+      ],
+      "inputs": [
+        "question",
+        "code_context",
+        "language_preference"
+      ],
+      "outputs": [
+        "guidance",
+        "code_example",
+        "best_practices"
+      ],
       "last_updated": "2026-06-08",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/developing_with_bigquery/"
     },
     {
       "id": "discovering_gcp_data_assets",
@@ -168,21 +352,47 @@
       "category": "data-catalog",
       "owner": "data-agent-team",
       "description": "Helps users discover and explore data assets across GCP using Data Catalog, INFORMATION_SCHEMA, and project-level metadata.",
-      "symptoms": ["find data", "data catalog", "what tables exist", "discover datasets"],
+      "symptoms": [
+        "find data",
+        "data catalog",
+        "what tables exist",
+        "discover datasets"
+      ],
       "documentation": "# Discovering GCP Data Assets\n\nHelps users find and understand data assets across their GCP organization.\n\n## Discovery Methods\n\n- **Data Catalog** — Search by tag, schema, or description\n- **INFORMATION_SCHEMA** — Programmatic metadata queries\n- **Asset Inventory** — Cross-project resource discovery\n\n## Features\n\n- Full-text search across table descriptions\n- Schema exploration and comparison\n- Lineage tracking\n- Usage statistics and popularity metrics",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for discovering_gcp_data_assets\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"discovering_gcp_data_assets\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"discovering_gcp_data_assets_test\",\n    srcs = [\"discovering_gcp_data_assets_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: discovering_gcp_data_assets\ndescription: Discover and explore GCP data assets\nmetadata:\n  version: 1.3.0\n---\n\n# Discovering GCP Data Assets\n\nYou help users find and understand their data..."
+        },
+        {
+          "name": "discovering_gcp_data_assets_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the discovering_gcp_data_assets skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass DiscoveringGcpDataAssetsSkillTest(unittest.TestCase):\n    \"\"\"Test suite for discovering_gcp_data_assets skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"discovering_gcp_data_assets\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"discovering_gcp_data_assets\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["data_quality_orchestrator"],
-      "inputs": ["search_query", "project_scope", "asset_type"],
-      "outputs": ["asset_list", "schema_details", "usage_stats"],
+      "meta_skill_routers": [
+        "data_quality_orchestrator"
+      ],
+      "inputs": [
+        "search_query",
+        "project_scope",
+        "asset_type"
+      ],
+      "outputs": [
+        "asset_list",
+        "schema_details",
+        "usage_stats"
+      ],
       "last_updated": "2026-05-18",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/discovering_gcp_data_assets/"
     },
     {
       "id": "gcloud_auth_verification",
@@ -191,21 +401,46 @@
       "category": "infrastructure",
       "owner": "data-agent-team",
       "description": "Verifies and troubleshoots gcloud CLI authentication, application default credentials, and service account configurations.",
-      "symptoms": ["auth error", "permission denied", "credentials expired", "gcloud login"],
+      "symptoms": [
+        "auth error",
+        "permission denied",
+        "credentials expired",
+        "gcloud login"
+      ],
       "documentation": "# gcloud Auth Verification\n\nDiagnoses and resolves authentication issues with the gcloud CLI and application default credentials.\n\n## Checks Performed\n\n1. `gcloud auth list` — Active account verification\n2. `gcloud auth application-default print-access-token` — ADC validation\n3. Service account key file verification\n4. Quota project configuration\n5. API enablement status",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcloud_auth_verification\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcloud_auth_verification\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcloud_auth_verification_test\",\n    srcs = [\"gcloud_auth_verification_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcloud_auth_verification\ndescription: Verifies gcloud authentication and credentials\nmetadata:\n  version: 1.0.0\n---\n\n# gcloud Auth Verification\n\nYou diagnose and resolve authentication issues..."
+        },
+        {
+          "name": "gcloud_auth_verification_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcloud_auth_verification skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcloudAuthVerificationSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcloud_auth_verification skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcloud_auth_verification\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcloud_auth_verification\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["infra_orchestrator"],
-      "inputs": ["error_message", "gcloud_config"],
-      "outputs": ["auth_status", "fix_steps", "verification_result"],
+      "meta_skill_routers": [
+        "infra_orchestrator"
+      ],
+      "inputs": [
+        "error_message",
+        "gcloud_config"
+      ],
+      "outputs": [
+        "auth_status",
+        "fix_steps",
+        "verification_result"
+      ],
       "last_updated": "2026-04-15",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcloud_auth_verification/"
     },
     {
       "id": "gcp_composer_troubleshooting",
@@ -214,21 +449,48 @@
       "category": "orchestration",
       "owner": "data-agent-team",
       "description": "Troubleshooting playbook for Cloud Composer (managed Airflow) environments, covering DAG failures, environment health, and dependency issues.",
-      "symptoms": ["DAG failed", "Composer error", "Airflow task failed", "worker pod crash"],
+      "symptoms": [
+        "DAG failed",
+        "Composer error",
+        "Airflow task failed",
+        "worker pod crash"
+      ],
       "documentation": "# GCP Composer Troubleshooting\n\nDiagnose and resolve issues with Cloud Composer environments.\n\n## Common Issues\n\n- DAG import errors\n- Task execution failures\n- Worker pod OOM crashes\n- PyPI dependency conflicts\n- Webserver connectivity issues\n- Environment upgrade failures\n\n## Diagnostic Steps\n\n1. Check DAG processor logs\n2. Inspect task instance logs\n3. Review worker pod health\n4. Validate environment configuration\n5. Check GKE cluster status",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_composer_troubleshooting\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_composer_troubleshooting\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_composer_troubleshooting_test\",\n    srcs = [\"gcp_composer_troubleshooting_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcp_composer_troubleshooting\ndescription: Troubleshooting playbook for Cloud Composer\nmetadata:\n  version: 1.4.0\n---\n\n# GCP Composer Troubleshooting\n\nYou diagnose and resolve Cloud Composer issues..."
+        },
+        {
+          "name": "gcp_composer_troubleshooting_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_composer_troubleshooting skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpComposerTroubleshootingSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_composer_troubleshooting skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_composer_troubleshooting\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_composer_troubleshooting\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["environment_name", "dag_id", "task_id", "error_log"],
-      "outputs": ["diagnosis", "fix_steps", "health_report"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "environment_name",
+        "dag_id",
+        "task_id",
+        "error_log"
+      ],
+      "outputs": [
+        "diagnosis",
+        "fix_steps",
+        "health_report"
+      ],
       "last_updated": "2026-06-05",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_composer_troubleshooting/"
     },
     {
       "id": "gcp_data_pipelines",
@@ -237,21 +499,47 @@
       "category": "data-pipeline",
       "owner": "data-agent-team",
       "description": "Assists with designing and implementing data pipelines using GCP services including Dataflow, Pub/Sub, BigQuery, and Cloud Storage.",
-      "symptoms": ["pipeline design", "data flow architecture", "ETL pipeline"],
+      "symptoms": [
+        "pipeline design",
+        "data flow architecture",
+        "ETL pipeline"
+      ],
       "documentation": "# GCP Data Pipelines\n\nHelps design and implement end-to-end data pipelines on GCP.\n\n## Pipeline Patterns\n\n- **Batch ETL** — GCS to BigQuery via Dataflow or load jobs\n- **Streaming** — Pub/Sub to BigQuery via Dataflow\n- **Change Data Capture** — Datastream to BigQuery\n- **Federated** — BigLake for multi-cloud queries",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_data_pipelines\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_data_pipelines\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_data_pipelines_test\",\n    srcs = [\"gcp_data_pipelines_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcp_data_pipelines\ndescription: Design and implement GCP data pipelines\nmetadata:\n  version: 2.0.0\n---\n\n# GCP Data Pipelines\n\nYou help users design and implement data pipelines..."
+        },
+        {
+          "name": "gcp_data_pipelines_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_data_pipelines skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpDataPipelinesSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_data_pipelines skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_data_pipelines\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_data_pipelines\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["source_type", "destination", "volume_estimate", "latency_requirement"],
-      "outputs": ["architecture_diagram", "implementation_plan", "cost_estimate"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "source_type",
+        "destination",
+        "volume_estimate",
+        "latency_requirement"
+      ],
+      "outputs": [
+        "architecture_diagram",
+        "implementation_plan",
+        "cost_estimate"
+      ],
       "last_updated": "2026-05-22",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_data_pipelines/"
     },
     {
       "id": "gcp_dataflow",
@@ -260,21 +548,47 @@
       "category": "data-pipeline",
       "owner": "data-agent-team",
       "description": "Supports development and troubleshooting of Apache Beam pipelines running on Cloud Dataflow, including template creation and job monitoring.",
-      "symptoms": ["Dataflow job failed", "beam pipeline error", "Dataflow slow", "worker startup"],
+      "symptoms": [
+        "Dataflow job failed",
+        "beam pipeline error",
+        "Dataflow slow",
+        "worker startup"
+      ],
       "documentation": "# GCP Dataflow\n\nAssists with Apache Beam / Cloud Dataflow development.\n\n## Capabilities\n\n- Pipeline development (Python and Java SDKs)\n- Flex template creation\n- Job submission and monitoring\n- Performance tuning (autoscaling, shuffle service)\n- Error diagnosis from worker logs",
       "assets": [
         {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_dataflow\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_dataflow\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_dataflow_test\",\n    srcs = [\"gcp_dataflow_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
+        {
           "name": "SKILL.md",
           "type": "markdown",
-          "content": "---\nname: gcp_dataflow\ndescription: Dataflow pipeline development and troubleshooting\nmetadata:\n  version: 1.6.0\n---\n\n# GCP Dataflow\n\nYou are an expert at Apache Beam and Cloud Dataflow..."
+          "content": "---\nname: gcp_dataflow\ndescription: Supports development and troubleshooting of Apache Beam pipelines on Cloud Dataflow.\nmetadata:\n  version: 1.6.0\n  tier: 2\n  category: data-pipeline\n  owner: data-agent-team\ntriggers:\n  - \"Dataflow\"\n  - \"Apache Beam\"\n  - \"streaming pipeline\"\n  - \"batch pipeline\"\n---\n\n# GCP Dataflow\n\nYou are an expert at Apache Beam and Cloud Dataflow pipeline development.\n\n## Capabilities\n\n- Pipeline development in Python and Java SDKs\n- Flex template creation and deployment\n- Job submission, monitoring, and cancellation\n- Performance tuning (autoscaling, shuffle service, worker configuration)\n- Error diagnosis from Dataflow worker logs\n- Streaming pipeline watermark and windowing guidance\n\n## Common Troubleshooting\n\n### Job Stuck in RUNNING\n1. Check worker logs for OOM errors\n2. Verify autoscaling settings (min/max workers)\n3. Check for data skew in ParDo transforms\n4. Monitor system lag and watermark progression\n\n### High Latency in Streaming\n1. Enable Streaming Engine for reduced latency\n2. Check for hot keys causing worker imbalance\n3. Review windowing and trigger configurations\n4. Consider using Dataflow Prime for autotune\n\n## Template Development\n\n```python\nfrom apache_beam.options.pipeline_options import PipelineOptions\n\noptions = PipelineOptions([\n    '--runner=DataflowRunner',\n    '--project=my-project',\n    '--region=us-central1',\n    '--temp_location=gs://my-bucket/temp',\n    '--staging_location=gs://my-bucket/staging',\n])\n```"
+        },
+        {
+          "name": "gcp_dataflow_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_dataflow skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpDataflowSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_dataflow skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_dataflow\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_dataflow\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["pipeline_code", "job_id", "error_log"],
-      "outputs": ["fix_steps", "pipeline_code", "performance_report"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "pipeline_code",
+        "job_id",
+        "error_log"
+      ],
+      "outputs": [
+        "fix_steps",
+        "pipeline_code",
+        "performance_report"
+      ],
       "last_updated": "2026-05-15",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_dataflow/"
     },
     {
       "id": "gcp_pipeline_orchestration",
@@ -283,21 +597,46 @@
       "category": "orchestration",
       "owner": "data-agent-team",
       "description": "Guides orchestration of complex data pipelines using Cloud Composer, Cloud Workflows, and Cloud Scheduler.",
-      "symptoms": ["orchestrate pipelines", "schedule workflow", "DAG design"],
+      "symptoms": [
+        "orchestrate pipelines",
+        "schedule workflow",
+        "DAG design"
+      ],
       "documentation": "# GCP Pipeline Orchestration\n\nHelps users choose and implement the right orchestration tool.\n\n## Orchestration Options\n\n| Tool | Best For |\n|------|----------|\n| Cloud Composer | Complex DAGs, Airflow ecosystem |\n| Cloud Workflows | Serverless, API-driven workflows |\n| Cloud Scheduler | Simple cron-based triggers |\n| Dataform | SQL-based transformation DAGs |",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_pipeline_orchestration\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_pipeline_orchestration\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_pipeline_orchestration_test\",\n    srcs = [\"gcp_pipeline_orchestration_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcp_pipeline_orchestration\ndescription: Pipeline orchestration guidance for GCP\nmetadata:\n  version: 1.2.0\n---\n\n# GCP Pipeline Orchestration\n\nYou help users design and implement pipeline orchestration..."
+        },
+        {
+          "name": "gcp_pipeline_orchestration_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_pipeline_orchestration skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpPipelineOrchestrationSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_pipeline_orchestration skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_pipeline_orchestration\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_pipeline_orchestration\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["pipeline_complexity", "existing_infra", "requirements"],
-      "outputs": ["tool_recommendation", "architecture_plan", "sample_config"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "pipeline_complexity",
+        "existing_infra",
+        "requirements"
+      ],
+      "outputs": [
+        "tool_recommendation",
+        "architecture_plan",
+        "sample_config"
+      ],
       "last_updated": "2026-05-10",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_pipeline_orchestration/"
     },
     {
       "id": "gcp_pipeline_resource_provisioning",
@@ -306,21 +645,46 @@
       "category": "infrastructure",
       "owner": "data-agent-team",
       "description": "Automates provisioning of GCP resources needed for data pipelines, including datasets, service accounts, IAM bindings, and API enablement.",
-      "symptoms": ["provision resources", "setup pipeline infra", "enable APIs"],
+      "symptoms": [
+        "provision resources",
+        "setup pipeline infra",
+        "enable APIs"
+      ],
       "documentation": "# GCP Pipeline Resource Provisioning\n\nAutomates the setup of GCP infrastructure for data pipelines.\n\n## Resources Managed\n\n- BigQuery datasets and tables\n- Cloud Storage buckets\n- Service accounts and IAM bindings\n- API enablement\n- VPC and networking for Dataflow\n- Pub/Sub topics and subscriptions",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_pipeline_resource_provisioning\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_pipeline_resource_provisioning\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_pipeline_resource_provisioning_test\",\n    srcs = [\"gcp_pipeline_resource_provisioning_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcp_pipeline_resource_provisioning\ndescription: Automates GCP resource provisioning for pipelines\nmetadata:\n  version: 1.1.0\n---\n\n# GCP Pipeline Resource Provisioning\n\nYou automate the provisioning of GCP resources..."
+        },
+        {
+          "name": "gcp_pipeline_resource_provisioning_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_pipeline_resource_provisioning skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpPipelineResourceProvisioningSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_pipeline_resource_provisioning skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_pipeline_resource_provisioning\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_pipeline_resource_provisioning\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["infra_orchestrator"],
-      "inputs": ["pipeline_type", "project_id", "region"],
-      "outputs": ["terraform_config", "provisioning_script", "setup_report"],
+      "meta_skill_routers": [
+        "infra_orchestrator"
+      ],
+      "inputs": [
+        "pipeline_type",
+        "project_id",
+        "region"
+      ],
+      "outputs": [
+        "terraform_config",
+        "provisioning_script",
+        "setup_report"
+      ],
       "last_updated": "2026-04-28",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_pipeline_resource_provisioning/"
     },
     {
       "id": "gcp_spark",
@@ -329,21 +693,47 @@
       "category": "compute",
       "owner": "data-agent-team",
       "description": "Supports Apache Spark development on GCP via Dataproc and BigQuery Spark connector, including job submission, tuning, and debugging.",
-      "symptoms": ["Spark job failed", "Dataproc error", "Spark slow", "Spark BigQuery connector"],
+      "symptoms": [
+        "Spark job failed",
+        "Dataproc error",
+        "Spark slow",
+        "Spark BigQuery connector"
+      ],
       "documentation": "# GCP Spark\n\nAssists with Apache Spark development on Google Cloud.\n\n## Supported Environments\n\n- **Dataproc** — Managed Spark clusters\n- **Dataproc Serverless** — On-demand Spark\n- **BigQuery Spark** — Spark stored procedures in BQ\n\n## Capabilities\n\n- PySpark and Scala development\n- BigQuery Spark connector configuration\n- Job submission and monitoring\n- Performance tuning (partitioning, caching, shuffle)",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for gcp_spark\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"gcp_spark\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"gcp_spark_test\",\n    srcs = [\"gcp_spark_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: gcp_spark\ndescription: Apache Spark development on GCP\nmetadata:\n  version: 1.3.0\n---\n\n# GCP Spark\n\nYou are an expert at Apache Spark on Google Cloud..."
+        },
+        {
+          "name": "gcp_spark_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the gcp_spark skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass GcpSparkSkillTest(unittest.TestCase):\n    \"\"\"Test suite for gcp_spark skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"gcp_spark\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"gcp_spark\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["pipeline_orchestrator"],
-      "inputs": ["spark_code", "cluster_config", "error_log"],
-      "outputs": ["fix_steps", "optimized_code", "cluster_recommendation"],
+      "meta_skill_routers": [
+        "pipeline_orchestrator"
+      ],
+      "inputs": [
+        "spark_code",
+        "cluster_config",
+        "error_log"
+      ],
+      "outputs": [
+        "fix_steps",
+        "optimized_code",
+        "cluster_recommendation"
+      ],
       "last_updated": "2026-05-08",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/gcp_spark/"
     },
     {
       "id": "managing_python_dependencies",
@@ -352,21 +742,47 @@
       "category": "infrastructure",
       "owner": "data-agent-team",
       "description": "Manages Python dependency resolution for data science and engineering environments, including virtual environments, pip, and Composer PyPI packages.",
-      "symptoms": ["pip install failed", "dependency conflict", "version mismatch", "import error"],
+      "symptoms": [
+        "pip install failed",
+        "dependency conflict",
+        "version mismatch",
+        "import error"
+      ],
       "documentation": "# Managing Python Dependencies\n\nResolves Python dependency issues in data engineering contexts.\n\n## Common Scenarios\n\n- Conflicting package versions in Composer\n- Virtual environment setup for local development\n- Requirements.txt / pyproject.toml management\n- Private PyPI repository configuration",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for managing_python_dependencies\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"managing_python_dependencies\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"managing_python_dependencies_test\",\n    srcs = [\"managing_python_dependencies_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: managing_python_dependencies\ndescription: Python dependency management for data environments\nmetadata:\n  version: 1.0.0\n---\n\n# Managing Python Dependencies\n\nYou resolve Python dependency issues..."
+        },
+        {
+          "name": "managing_python_dependencies_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the managing_python_dependencies skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass ManagingPythonDependenciesSkillTest(unittest.TestCase):\n    \"\"\"Test suite for managing_python_dependencies skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"managing_python_dependencies\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"managing_python_dependencies\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["infra_orchestrator"],
-      "inputs": ["requirements", "error_log", "environment_type"],
-      "outputs": ["resolved_requirements", "fix_steps", "compatibility_report"],
+      "meta_skill_routers": [
+        "infra_orchestrator"
+      ],
+      "inputs": [
+        "requirements",
+        "error_log",
+        "environment_type"
+      ],
+      "outputs": [
+        "resolved_requirements",
+        "fix_steps",
+        "compatibility_report"
+      ],
       "last_updated": "2026-04-20",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/managing_python_dependencies/"
     },
     {
       "id": "ml_best_practices",
@@ -375,21 +791,47 @@
       "category": "machine-learning",
       "owner": "data-agent-team",
       "description": "Playbook for machine learning best practices on GCP, covering BigQuery ML, Vertex AI, feature engineering, and model evaluation.",
-      "symptoms": ["ML model performance", "feature engineering", "BigQuery ML", "model evaluation"],
+      "symptoms": [
+        "ML model performance",
+        "feature engineering",
+        "BigQuery ML",
+        "model evaluation"
+      ],
       "documentation": "# ML Best Practices\n\nGuides users through machine learning best practices on GCP.\n\n## Topics\n\n- Feature engineering with BigQuery\n- BigQuery ML model training and evaluation\n- Vertex AI integration\n- Model versioning and deployment\n- A/B testing and monitoring\n\n## BigQuery ML Models\n\n```sql\nCREATE OR REPLACE MODEL `project.dataset.model_name`\nOPTIONS(\n  model_type='LINEAR_REG',\n  input_label_cols=['target_column']\n) AS\nSELECT * FROM `project.dataset.training_data`;\n```",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for ml_best_practices\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"ml_best_practices\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"ml_best_practices_test\",\n    srcs = [\"ml_best_practices_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: ml_best_practices\ndescription: Machine learning best practices on GCP\nmetadata:\n  version: 1.1.0\n---\n\n# ML Best Practices\n\nYou guide users through ML best practices on GCP..."
+        },
+        {
+          "name": "ml_best_practices_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the ml_best_practices skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass MlBestPracticesSkillTest(unittest.TestCase):\n    \"\"\"Test suite for ml_best_practices skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"ml_best_practices\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"ml_best_practices\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["development_orchestrator"],
-      "inputs": ["ml_task", "data_description", "model_type"],
-      "outputs": ["best_practices", "code_example", "evaluation_plan"],
+      "meta_skill_routers": [
+        "development_orchestrator"
+      ],
+      "inputs": [
+        "ml_task",
+        "data_description",
+        "model_type"
+      ],
+      "outputs": [
+        "best_practices",
+        "code_example",
+        "evaluation_plan"
+      ],
       "last_updated": "2026-06-02",
       "has_skill_md": true,
-      "has_example_queries": true
+      "has_example_queries": true,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/ml_best_practices/"
     },
     {
       "id": "notebook_guidance",
@@ -398,21 +840,47 @@
       "category": "development",
       "owner": "data-agent-team",
       "description": "Provides guidance for Jupyter/Colab notebook development, including BigQuery magics, kernel management, and notebook best practices.",
-      "symptoms": ["notebook error", "kernel crash", "BigQuery magic", "Colab setup"],
+      "symptoms": [
+        "notebook error",
+        "kernel crash",
+        "BigQuery magic",
+        "Colab setup"
+      ],
       "documentation": "# Notebook Guidance\n\nHelps users work effectively with Jupyter and Colab notebooks.\n\n## Topics\n\n- BigQuery cell magics (`%%bigquery`)\n- Kernel and environment management\n- Notebook organization best practices\n- Parameterized notebooks (Papermill)\n- Vertex AI Workbench configuration",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for notebook_guidance\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"notebook_guidance\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"notebook_guidance_test\",\n    srcs = [\"notebook_guidance_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: notebook_guidance\ndescription: Jupyter/Colab notebook guidance\nmetadata:\n  version: 1.2.0\n---\n\n# Notebook Guidance\n\nYou help users work effectively with notebooks..."
+        },
+        {
+          "name": "notebook_guidance_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the notebook_guidance skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass NotebookGuidanceSkillTest(unittest.TestCase):\n    \"\"\"Test suite for notebook_guidance skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"notebook_guidance\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"notebook_guidance\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["development_orchestrator"],
-      "inputs": ["notebook_type", "error_message", "environment"],
-      "outputs": ["guidance", "code_snippet", "config_fix"],
+      "meta_skill_routers": [
+        "development_orchestrator"
+      ],
+      "inputs": [
+        "notebook_type",
+        "error_message",
+        "environment"
+      ],
+      "outputs": [
+        "guidance",
+        "code_snippet",
+        "config_fix"
+      ],
       "last_updated": "2026-05-12",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/notebook_guidance/"
     },
     {
       "id": "skill_repair",
@@ -421,21 +889,47 @@
       "category": "meta",
       "owner": "data-agent-team",
       "description": "Meta-skill that diagnoses and repairs issues with other agent skills, including version conflicts, configuration errors, and runtime failures.",
-      "symptoms": ["skill error", "skill not working", "agent failure", "skill version"],
+      "symptoms": [
+        "skill error",
+        "skill not working",
+        "agent failure",
+        "skill version"
+      ],
       "documentation": "# Skill Repair\n\nA meta-skill that diagnoses and repairs issues with other skills in the agent system.\n\n## Capabilities\n\n- Skill version verification\n- Configuration validation\n- Runtime error diagnosis\n- Skill dependency resolution\n- Automatic skill reload/restart",
       "assets": [
+        {
+          "name": "BUILD",
+          "type": "bzl",
+          "content": "# Skill package for skill_repair\n\nload(\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:skill_defs.bzl\", \"antigravity_skill\")\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nantigravity_skill(\n    name = \"skill_repair\",\n    srcs = [\"SKILL.md\"],\n    data = glob([\"resources/**\"]),\n)\n\npy_test(\n    name = \"skill_repair_test\",\n    srcs = [\"skill_repair_test.py\"],\n    deps = [\n        \"//cloud/developer_experience/datacloud_vscode/antigravity/skills:process_skill\",\n    ],\n)"
+        },
         {
           "name": "SKILL.md",
           "type": "markdown",
           "content": "---\nname: skill_repair\ndescription: Diagnoses and repairs agent skill issues\nmetadata:\n  version: 1.0.0\n---\n\n# Skill Repair\n\nYou diagnose and repair issues with other agent skills..."
+        },
+        {
+          "name": "skill_repair_test.py",
+          "type": "python",
+          "content": "\"\"\"Tests for the skill_repair skill.\"\"\"\n\nimport unittest\nfrom cloud.developer_experience.datacloud_vscode.antigravity.skills import process_skill\n\n\nclass SkillRepairSkillTest(unittest.TestCase):\n    \"\"\"Test suite for skill_repair skill.\"\"\"\n\n    def setUp(self):\n        self.skill = process_skill.load_skill(\"skill_repair\")\n\n    def test_skill_loads(self):\n        \"\"\"Verify the skill definition loads without errors.\"\"\"\n        self.assertIsNotNone(self.skill)\n        self.assertEqual(self.skill.name, \"skill_repair\")\n\n    def test_skill_has_description(self):\n        \"\"\"Verify the skill has a non-empty description.\"\"\"\n        self.assertTrue(len(self.skill.description) > 0)\n\n    def test_skill_has_triggers(self):\n        \"\"\"Verify the skill has at least one trigger defined.\"\"\"\n        self.assertTrue(len(self.skill.triggers) > 0)\n\n    def test_skill_metadata(self):\n        \"\"\"Verify required metadata fields are present.\"\"\"\n        self.assertIn(\"version\", self.skill.metadata)\n        self.assertIn(\"tier\", self.skill.metadata)\n        self.assertIn(\"category\", self.skill.metadata)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
         }
       ],
-      "meta_skill_routers": ["infra_orchestrator"],
-      "inputs": ["skill_name", "error_log", "skill_version"],
-      "outputs": ["diagnosis", "repair_steps", "health_check"],
+      "meta_skill_routers": [
+        "infra_orchestrator"
+      ],
+      "inputs": [
+        "skill_name",
+        "error_log",
+        "skill_version"
+      ],
+      "outputs": [
+        "diagnosis",
+        "repair_steps",
+        "health_check"
+      ],
       "last_updated": "2026-06-06",
       "has_skill_md": true,
-      "has_example_queries": false
+      "has_example_queries": false,
+      "source_path": "https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/skill_repair/"
     }
   ],
   "meta_skill_routers": [
@@ -443,31 +937,97 @@
       "id": "pipeline_orchestrator",
       "name": "Pipeline Orchestrator",
       "description": "Routes data pipeline and ETL-related requests to the appropriate skill for Dataflow, Dataform, dbt, Composer, and Spark workflows.",
-      "sub_skills": ["bigquery_data_transfer_service", "dataform_bigquery", "dbt_bigquery", "gcp_composer_troubleshooting", "gcp_data_pipelines", "gcp_dataflow", "gcp_pipeline_orchestration", "gcp_spark"]
+      "sub_skills": [
+        "bigquery_data_transfer_service",
+        "dataform_bigquery",
+        "dbt_bigquery",
+        "gcp_composer_troubleshooting",
+        "gcp_data_pipelines",
+        "gcp_dataflow",
+        "gcp_pipeline_orchestration",
+        "gcp_spark"
+      ]
     },
     {
       "id": "development_orchestrator",
       "name": "Development Orchestrator",
       "description": "Coordinates developer-focused skills including BigQuery development, data app building, ML guidance, and notebook support.",
-      "sub_skills": ["building_data_apps", "developing_with_bigquery", "ml_best_practices", "notebook_guidance"]
+      "sub_skills": [
+        "building_data_apps",
+        "developing_with_bigquery",
+        "ml_best_practices",
+        "notebook_guidance"
+      ]
     },
     {
       "id": "data_quality_orchestrator",
       "name": "Data Quality Orchestrator",
       "description": "Manages data quality and discovery workflows, including auto-cleaning, data catalog search, and quality profiling.",
-      "sub_skills": ["data_autocleaning", "discovering_gcp_data_assets"]
+      "sub_skills": [
+        "data_autocleaning",
+        "discovering_gcp_data_assets"
+      ]
     },
     {
       "id": "data_safety_orchestrator",
       "name": "Data Safety Orchestrator",
       "description": "Coordinates data safety skills that prevent accidental data loss and enforce safety policies.",
-      "sub_skills": ["accidental_data_loss_prevention"]
+      "sub_skills": [
+        "accidental_data_loss_prevention"
+      ]
     },
     {
       "id": "infra_orchestrator",
       "name": "Infrastructure Orchestrator",
       "description": "Manages infrastructure-level skills including authentication, resource provisioning, dependency management, and skill repair.",
-      "sub_skills": ["gcloud_auth_verification", "gcp_pipeline_resource_provisioning", "managing_python_dependencies", "skill_repair"]
+      "sub_skills": [
+        "gcloud_auth_verification",
+        "gcp_pipeline_resource_provisioning",
+        "managing_python_dependencies",
+        "skill_repair"
+      ]
+    }
+  ],
+  "repository_files": [
+    {
+      "name": "BUILD",
+      "type": "bzl",
+      "content": "# Root BUILD file for Antigravity Skills\n\npackage(default_visibility = [\"//cloud/developer_experience/datacloud_vscode/antigravity:__subpackages__\"])\n\nexports_files(glob([\"*.py\", \"*.sh\", \"*.bzl\"]))"
+    },
+    {
+      "name": "README.md",
+      "type": "markdown",
+      "content": "# Antigravity Skills\n\nThis directory contains the skill definitions for the Data Agent Toolkit.\n\n## Directory Structure\n\nEach skill is defined in its own directory with the following structure:\n\n```\nskill_name/\n  BUILD           # Bazel build rules\n  SKILL.md        # Skill definition and prompt\n  *_test.py       # Skill tests\n  resources/      # Optional resource files\n```\n\n## Adding a New Skill\n\n1. Create a new directory with your skill name (snake_case)\n2. Add a `SKILL.md` with frontmatter metadata and skill prompt\n3. Add a `BUILD` file using the `antigravity_skill` rule\n4. Run `check_skill_version.sh` to validate\n5. Submit for review\n\n## Testing\n\nRun all skill tests:\n```bash\nblaze test //cloud/developer_experience/datacloud_vscode/antigravity/skills/...\n```\n\n## Scripts\n\n- `check_skill_version.sh` - Validates skill version metadata\n- `process_skill.py` - Processes skill definitions for deployment\n- `upload_eval_skills.sh` - Uploads skills to evaluation environment"
+    },
+    {
+      "name": "OWNERS",
+      "type": "txt",
+      "content": "# Antigravity Skills Owners\n# go/anthropic-skills-owners\n\nset noparent\n\nper-file * = data-agent-core-team@google.com\nper-file METADATA = anthropic-infra@google.com"
+    },
+    {
+      "name": "METADATA",
+      "type": "txt",
+      "content": "name: \"antigravity_skills\"\ndescription: \"Skill definitions for the Antigravity Data Agent Toolkit\"\n\nthird_party {\n  type: GOOGLE_INTERNAL\n}"
+    },
+    {
+      "name": "process_skill.py",
+      "type": "python",
+      "content": "\"\"\"Process and validate skill definitions for deployment.\"\"\"\n\nimport os\nimport re\nimport yaml\nfrom pathlib import Path\nfrom typing import Dict, Any, Optional\n\n\nclass Skill:\n    \"\"\"Represents a parsed skill definition.\"\"\"\n\n    def __init__(self, name: str, description: str, metadata: Dict[str, Any],\n                 triggers: list, content: str):\n        self.name = name\n        self.description = description\n        self.metadata = metadata\n        self.triggers = triggers\n        self.content = content\n\n\ndef load_skill(skill_name: str) -> Optional[Skill]:\n    \"\"\"Load a skill definition from its directory.\n    \n    Args:\n        skill_name: Name of the skill directory.\n        \n    Returns:\n        Parsed Skill object, or None if not found.\n    \"\"\"\n    skill_dir = Path(__file__).parent / skill_name\n    skill_md = skill_dir / \"SKILL.md\"\n    \n    if not skill_md.exists():\n        return None\n    \n    content = skill_md.read_text()\n    \n    # Parse frontmatter\n    fm_match = re.match(r\"^---\\n(.+?)\\n---\\n(.*)$\", content, re.DOTALL)\n    if not fm_match:\n        raise ValueError(f\"Invalid SKILL.md format for {skill_name}\")\n    \n    frontmatter = yaml.safe_load(fm_match.group(1))\n    body = fm_match.group(2)\n    \n    return Skill(\n        name=frontmatter.get(\"name\", skill_name),\n        description=frontmatter.get(\"description\", \"\"),\n        metadata=frontmatter.get(\"metadata\", {}),\n        triggers=frontmatter.get(\"triggers\", []),\n        content=body,\n    )\n\n\ndef validate_skill(skill: Skill) -> list:\n    \"\"\"Validate a skill definition and return any issues.\"\"\"\n    issues = []\n    \n    if not skill.name:\n        issues.append(\"Missing skill name\")\n    if not skill.description:\n        issues.append(\"Missing skill description\")\n    if not skill.metadata.get(\"version\"):\n        issues.append(\"Missing version in metadata\")\n    if not skill.triggers:\n        issues.append(\"No triggers defined\")\n    if len(skill.content) < 100:\n        issues.append(\"Skill content seems too short\")\n    \n    return issues"
+    },
+    {
+      "name": "skill_defs.bzl",
+      "type": "bzl",
+      "content": "\"\"\"Bazel rules for defining Antigravity skills.\"\"\"\n\ndef antigravity_skill(name, srcs, data = [], deps = [], visibility = None):\n    \"\"\"Define an Antigravity skill package.\n    \n    Args:\n        name: Skill name (should match directory name).\n        srcs: Source files (typically [\"SKILL.md\"]).\n        data: Additional data files (resources, examples).\n        deps: Dependencies on other skills or libraries.\n        visibility: Build visibility.\n    \"\"\"\n    native.filegroup(\n        name = name,\n        srcs = srcs + data,\n        visibility = visibility,\n    )\n    \n    native.genrule(\n        name = name + \"_validate\",\n        srcs = srcs,\n        outs = [name + \"_validation.txt\"],\n        cmd = \"$(location //cloud/developer_experience/datacloud_vscode/antigravity/skills:check_skill_version.sh) $(SRCS) > $@\",\n        tools = [\"//cloud/developer_experience/datacloud_vscode/antigravity/skills:check_skill_version.sh\"],\n    )"
+    },
+    {
+      "name": "check_skill_version.sh",
+      "type": "sh",
+      "content": "#!/bin/bash\n# Validates skill version metadata in SKILL.md files.\n# Usage: check_skill_version.sh <path_to_skill_md>\n\nset -euo pipefail\n\nSKILL_MD=\"${1:?Usage: check_skill_version.sh <SKILL.md>}\"\n\nif [[ ! -f \"$SKILL_MD\" ]]; then\n    echo \"ERROR: File not found: $SKILL_MD\"\n    exit 1\nfi\n\n# Extract version from frontmatter\nVERSION=$(grep -A1 'version:' \"$SKILL_MD\" | tail -1 | tr -d ' ')\n\nif [[ -z \"$VERSION\" ]]; then\n    echo \"ERROR: No version found in $SKILL_MD\"\n    exit 1\nfi\n\n# Validate semver format\nif [[ ! \"$VERSION\" =~ ^[0-9]+\\.[0-9]+\\.[0-9]+$ ]]; then\n    echo \"ERROR: Invalid version format: $VERSION (expected semver)\"\n    exit 1\nfi\n\necho \"OK: $SKILL_MD version $VERSION\""
+    },
+    {
+      "name": "upload_eval_skills.sh",
+      "type": "sh",
+      "content": "#!/bin/bash\n# Uploads processed skills to the evaluation environment.\n# Usage: upload_eval_skills.sh [--env staging|prod] [--skill <name>]\n\nset -euo pipefail\n\nENV=\"${1:-staging}\"\nSKILL_NAME=\"${2:-all}\"\nSKILLS_DIR=\"$(dirname \"$0\")\"\n\necho \"Uploading skills to $ENV environment...\"\n\nif [[ \"$SKILL_NAME\" == \"all\" ]]; then\n    for dir in \"$SKILLS_DIR\"/*/; do\n        if [[ -f \"$dir/SKILL.md\" ]]; then\n            skill=$(basename \"$dir\")\n            echo \"  Processing: $skill\"\n            python3 \"$SKILLS_DIR/process_skill.py\" --skill \"$skill\" --env \"$ENV\"\n        fi\n    done\nelse\n    echo \"  Processing: $SKILL_NAME\"\n    python3 \"$SKILLS_DIR/process_skill.py\" --skill \"$SKILL_NAME\" --env \"$ENV\"\nfi\n\necho \"Upload complete.\""
     }
   ]
 }

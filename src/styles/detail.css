@@ -273,3 +273,189 @@
   background-color: var(--google-green-light);
   color: var(--google-green);
 }
+
+/* --- Inline File Viewer --- */
+.skill-detail__files-section {
+  margin-top: var(--space-32);
+}
+
+.skill-detail__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: var(--space-16);
+}
+
+.skill-detail__file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-bottom: var(--space-4);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0;
+}
+
+.skill-detail__file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-16);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  font-size: var(--font-size-sm);
+}
+
+.skill-detail__file-item:hover {
+  background-color: var(--surface-variant);
+}
+
+.skill-detail__file-item--active {
+  border-bottom-color: var(--google-blue);
+  background-color: var(--surface);
+}
+
+.skill-detail__file-icon {
+  font-size: 18px;
+  color: var(--on-surface-variant);
+}
+
+.skill-detail__file-item--active .skill-detail__file-icon {
+  color: var(--google-blue);
+}
+
+.skill-detail__file-name {
+  font-family: var(--font-code);
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.skill-detail__file-item--active .skill-detail__file-name {
+  color: var(--google-blue);
+}
+
+.skill-detail__file-type {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+  text-transform: uppercase;
+}
+
+.skill-detail__file-viewer {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+  overflow: hidden;
+}
+
+.skill-detail__file-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-10) var(--space-16);
+  background-color: var(--surface-variant);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.skill-detail__file-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.skill-detail__file-header-name {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.skill-detail__file-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.skill-detail__file-stat {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+}
+
+.skill-detail__file-body {
+  overflow-x: auto;
+}
+
+.skill-detail__file-code {
+  margin: 0;
+  border-radius: 0;
+}
+
+.skill-detail__file-code code {
+  display: block;
+  padding: var(--space-16) var(--space-20);
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 4;
+}
+
+.skill-detail__file-rendered-md {
+  padding: var(--space-24) var(--space-20);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed);
+}
+
+.skill-detail__file-rendered-md h1,
+.skill-detail__file-rendered-md h2,
+.skill-detail__file-rendered-md h3 {
+  margin-top: var(--space-20);
+  margin-bottom: var(--space-8);
+}
+
+.skill-detail__file-rendered-md h1 { font-size: var(--font-size-xl); }
+.skill-detail__file-rendered-md h2 { font-size: var(--font-size-lg); }
+
+.skill-detail__file-rendered-md p {
+  margin-bottom: var(--space-12);
+}
+
+.skill-detail__file-rendered-md ul,
+.skill-detail__file-rendered-md ol {
+  padding-left: var(--space-24);
+  margin-bottom: var(--space-12);
+}
+
+.skill-detail__file-rendered-md ul { list-style: disc; }
+.skill-detail__file-rendered-md ol { list-style: decimal; }
+
+.skill-detail__file-rendered-md li {
+  margin-bottom: var(--space-4);
+}
+
+.skill-detail__file-rendered-md code {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface-variant);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-xs);
+}
+
+.skill-detail__file-rendered-md pre code {
+  display: block;
+  padding: var(--space-16);
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  border-radius: var(--border-radius-sm);
+}
+
+.skill-detail__file-rendered-md hr {
+  border: none;
+  border-top: 1px solid var(--border-color-light);
+  margin: var(--space-16) 0;
+}
+
