@@ -9,13 +9,15 @@ import { SideNav } from './SideNav.js';
 export class App {
   /**
    * @param {HTMLElement} container
-   * @param {{ router: import('../router.js').Router, data: object, searchEngine: import('../search.js').SearchEngine }} deps
+   * @param {{ router: import('../router.js').Router, data: object, searchEngine: import('../search.js').SearchEngine, onSkillsetChange: Function, activeSkillset: string }} deps
    */
   constructor(container, deps) {
     this.container = container;
     this.router = deps.router;
     this.data = deps.data;
     this.searchEngine = deps.searchEngine;
+    this.onSkillsetChange = deps.onSkillsetChange;
+    this.activeSkillset = deps.activeSkillset || 'bigquery';
 
     this.render();
     this.topBar = new TopBar(
@@ -24,6 +26,10 @@ export class App {
         onSearch: (q) => this.handleSearch(q),
         onResultClick: (skillId) => this.router.navigate(`/skill/${skillId}`),
         searchEngine: this.searchEngine,
+        onSkillsetChange: (skillset) => {
+          if (this.onSkillsetChange) this.onSkillsetChange(skillset);
+        },
+        activeSkillset: this.activeSkillset,
       }
     );
     this.sideNav = new SideNav(

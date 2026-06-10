@@ -1,27 +1,64 @@
 /**
  * BQ Skill Explorer — TopBar Component
- * Logo, Omnibox search, and user avatar.
+ * Logo, skillset selector, Omnibox search, and user avatar.
  */
 
 export class TopBar {
-  constructor(container, { onSearch, onResultClick, searchEngine }) {
+  constructor(container, { onSearch, onResultClick, searchEngine, onSkillsetChange, activeSkillset }) {
     this.container = container;
     this.onSearch = onSearch;
     this.onResultClick = onResultClick;
     this.searchEngine = searchEngine;
+    this.onSkillsetChange = onSkillsetChange;
+    this.activeSkillset = activeSkillset || 'bigquery';
     this.focusedIndex = -1;
     this.results = [];
     this.debounceTimer = null;
+    this.menuOpen = false;
 
     this.render();
     this.bindEvents();
   }
 
   render() {
+    const skillsetLabel = this.activeSkillset === 'bigquery' ? 'BigQuery Skills' : 'Data Agent Skills';
+    const skillsetIcon = this.activeSkillset === 'bigquery' ? 'database' : 'smart_toy';
+
     this.container.innerHTML = `
       <div class="top-bar__logo">
-        <span class="material-symbols-outlined top-bar__logo-icon">database</span>
-        <span class="top-bar__title">BQ Skill Explorer</span>
+        <span class="material-symbols-outlined top-bar__logo-icon">${skillsetIcon}</span>
+        <span class="top-bar__title">Skill Explorer</span>
+        <div class="top-bar__skillset-selector" id="skillset-selector">
+          <button class="top-bar__skillset-btn" id="skillset-btn" aria-haspopup="true" aria-expanded="false">
+            <span class="top-bar__skillset-label">${skillsetLabel}</span>
+            <span class="material-symbols-outlined top-bar__skillset-arrow">expand_more</span>
+          </button>
+          <div class="top-bar__skillset-menu" id="skillset-menu">
+            <div class="top-bar__skillset-menu-item ${this.activeSkillset === 'bigquery' ? 'top-bar__skillset-menu-item--active' : ''}"
+                 data-skillset="bigquery">
+              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-blue);">database</span>
+              <div class="top-bar__skillset-menu-content">
+                <div class="top-bar__skillset-menu-name">BigQuery Skills</div>
+                <div class="top-bar__skillset-menu-desc">SRE diagnostics, optimization, and monitoring</div>
+              </div>
+              ${this.activeSkillset === 'bigquery' ? '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--google-blue);">check</span>' : ''}
+            </div>
+            <div class="top-bar__skillset-menu-item ${this.activeSkillset === 'data-agent' ? 'top-bar__skillset-menu-item--active' : ''}"
+                 data-skillset="data-agent">
+              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-green);">smart_toy</span>
+              <div class="top-bar__skillset-menu-content">
+                <div class="top-bar__skillset-menu-name">Data Agent Skills</div>
+                <div class="top-bar__skillset-menu-desc">Antigravity agent skills for data development</div>
+              </div>
+              ${this.activeSkillset === 'data-agent' ? '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--google-blue);">check</span>' : ''}
+            </div>
+            <div class="top-bar__skillset-menu-divider"></div>
+            <div class="top-bar__skillset-menu-footer">
+              <span class="material-symbols-outlined" style="font-size: 16px;">info</span>
+              Source: <a href="https://source.corp.google.com/piper///depot/google3/cloud/developer_experience/datacloud_vscode/antigravity/skills/" target="_blank" rel="noopener">Antigravity Skills</a>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="top-bar__search" id="global-search">
         <div class="top-bar__search-input-wrapper">
@@ -47,7 +84,6 @@ export class TopBar {
 
   bindEvents() {
     const input = this.container.querySelector('#omnibox-input');
-    const dropdown = this.container.querySelector('#search-dropdown');
 
     input.addEventListener('input', (e) => {
       clearTimeout(this.debounceTimer);
@@ -66,10 +102,52 @@ export class TopBar {
       this.handleKeydown(e);
     });
 
-    // Click outside to close
+    // Click outside to close search
     document.addEventListener('click', (e) => {
-      if (!this.container.querySelector('#global-search').contains(e.target)) {
+      const search = this.container.querySelector('#global-search');
+      if (search && !search.contains(e.target)) {
         this.hideDropdown();
+      }
+    });
+
+    // Skillset selector
+    const selectorBtn = this.container.querySelector('#skillset-btn');
+    const selectorMenu = this.container.querySelector('#skillset-menu');
+
+    selectorBtn?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.menuOpen = !this.menuOpen;
+      selectorMenu.classList.toggle('top-bar__skillset-menu--visible', this.menuOpen);
+      selectorBtn.setAttribute('aria-expanded', this.menuOpen);
+    });
+
+    // Menu item clicks
+    this.container.querySelectorAll('.top-bar__skillset-menu-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const skillset = item.dataset.skillset;
+        if (skillset && skillset !== this.activeSkillset) {
+          this.activeSkillset = skillset;
+          this.menuOpen = false;
+          selectorMenu.classList.remove('top-bar__skillset-menu--visible');
+          this.render();
+          this.bindEvents();
+          if (this.onSkillsetChange) {
+            this.onSkillsetChange(skillset);
+          }
+        } else {
+          this.menuOpen = false;
+          selectorMenu.classList.remove('top-bar__skillset-menu--visible');
+        }
+      });
+    });
+
+    // Click outside to close menu
+    document.addEventListener('click', (e) => {
+      const selector = this.container.querySelector('#skillset-selector');
+      if (selector && !selector.contains(e.target)) {
+        this.menuOpen = false;
+        selectorMenu?.classList.remove('top-bar__skillset-menu--visible');
       }
     });
   }
@@ -179,11 +257,11 @@ export class TopBar {
   }
 
   showDropdown() {
-    this.container.querySelector('#search-dropdown').classList.add('search-dropdown--visible');
+    this.container.querySelector('#search-dropdown')?.classList.add('search-dropdown--visible');
   }
 
   hideDropdown() {
-    this.container.querySelector('#search-dropdown').classList.remove('search-dropdown--visible');
+    this.container.querySelector('#search-dropdown')?.classList.remove('search-dropdown--visible');
     this.focusedIndex = -1;
   }
 }

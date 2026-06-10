@@ -1,0 +1,473 @@
+{
+  "skills": [
+    {
+      "id": "accidental_data_loss_prevention",
+      "name": "Accidental Data Loss Prevention",
+      "tier": 3,
+      "category": "data-safety",
+      "owner": "data-agent-team",
+      "description": "Prevents accidental data loss by validating destructive operations before execution. Checks DROP, DELETE, and TRUNCATE statements against safety policies.",
+      "symptoms": ["data loss", "accidental delete", "dropped table", "truncated data"],
+      "documentation": "# Accidental Data Loss Prevention\n\nThis skill intercepts potentially destructive operations and validates them against configurable safety policies before allowing execution.\n\n## Protected Operations\n\n- `DROP TABLE` / `DROP DATASET`\n- `DELETE FROM` without WHERE clause\n- `TRUNCATE TABLE`\n- Overwrites to production tables\n\n## Safety Checks\n\n1. **Scope Validation** — Ensures destructive ops target the intended resources\n2. **Backup Verification** — Confirms recent backups exist before allowing drops\n3. **Confirmation Prompt** — Requires explicit user confirmation for irreversible actions\n4. **Audit Logging** — Records all destructive operations for compliance\n\n## Configuration\n\n```yaml\nsafety_policies:\n  require_where_clause: true\n  require_backup_before_drop: true\n  protected_datasets:\n    - production\n    - analytics\n  max_delete_rows: 10000\n```",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: accidental_data_loss_prevention\ndescription: Prevents accidental data loss by validating destructive operations\nmetadata:\n  version: 1.2.0\n---\n\n# Accidental Data Loss Prevention\n\nYou are a safety-focused agent skill that prevents accidental data loss..."
+        }
+      ],
+      "meta_skill_routers": ["data_safety_orchestrator"],
+      "inputs": ["sql_statement", "target_dataset", "user_context"],
+      "outputs": ["validation_result", "safety_report", "confirmation_prompt"],
+      "last_updated": "2026-06-01",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "bigquery_data_transfer_service",
+      "name": "BigQuery Data Transfer Service",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-agent-team",
+      "description": "Assists with configuring, monitoring, and troubleshooting BigQuery Data Transfer Service (DTS) transfers from SaaS sources and cross-region copies.",
+      "symptoms": ["transfer failed", "DTS error", "data transfer stuck", "scheduled transfer"],
+      "documentation": "# BigQuery Data Transfer Service\n\nHelps users configure and manage BigQuery Data Transfer Service for automated data movement.\n\n## Supported Sources\n\n- Google Ads\n- Google Analytics\n- YouTube\n- Amazon S3\n- Cross-region dataset copies\n- Scheduled queries\n\n## Capabilities\n\n- Create and configure new transfers\n- Monitor transfer run status\n- Debug transfer failures\n- Optimize transfer schedules",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: bigquery_data_transfer_service\ndescription: Assists with BigQuery Data Transfer Service configuration and troubleshooting\nmetadata:\n  version: 2.0.1\n---\n\n# BigQuery Data Transfer Service Skill\n\nYou help users work with the BigQuery Data Transfer Service..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["source_type", "project_id", "dataset_id", "schedule"],
+      "outputs": ["transfer_config", "status_report", "troubleshooting_guide"],
+      "last_updated": "2026-05-28",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "building_data_apps",
+      "name": "Building Data Apps",
+      "tier": 3,
+      "category": "development",
+      "owner": "data-agent-team",
+      "description": "Guides users through building data-driven applications using BigQuery, Cloud Functions, and frontend frameworks. Covers architecture patterns and best practices.",
+      "symptoms": ["build data app", "connect BigQuery to frontend", "data visualization app"],
+      "documentation": "# Building Data Apps\n\nA comprehensive playbook for building production-ready data applications on Google Cloud.\n\n## Architecture Patterns\n\n1. **Direct Query** — Frontend queries BigQuery via REST API\n2. **Cached Layer** — Materialized views + Cloud Functions API\n3. **Real-time** — BigQuery subscriptions + Pub/Sub + WebSockets\n\n## Stack Recommendations\n\n| Layer | Technology |\n|-------|------------|\n| Frontend | React, Angular, or Vanilla JS |\n| API | Cloud Functions or Cloud Run |\n| Data | BigQuery + Materialized Views |\n| Auth | Firebase Auth / IAP |\n| Hosting | Firebase Hosting |",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: building_data_apps\ndescription: Guides building data-driven applications on Google Cloud\nmetadata:\n  version: 1.0.0\n---\n\n# Building Data Apps\n\nYou are an expert at helping users build data-driven applications..."
+        }
+      ],
+      "meta_skill_routers": ["development_orchestrator"],
+      "inputs": ["app_type", "data_source", "framework_preference"],
+      "outputs": ["architecture_plan", "code_scaffold", "deployment_config"],
+      "last_updated": "2026-05-20",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "data_autocleaning",
+      "name": "Data Autocleaning",
+      "tier": 2,
+      "category": "data-quality",
+      "owner": "data-agent-team",
+      "description": "Automatically detects and suggests fixes for common data quality issues: null values, duplicates, type mismatches, outliers, and formatting inconsistencies.",
+      "symptoms": ["dirty data", "null values", "duplicates", "data quality", "type mismatch"],
+      "documentation": "# Data Autocleaning\n\nAutomatically profiles datasets and suggests cleaning transformations.\n\n## Detection Capabilities\n\n- **Null/Missing Values** — Identifies columns with high null rates\n- **Duplicates** — Finds exact and fuzzy duplicate rows\n- **Type Mismatches** — Detects strings stored as numbers, etc.\n- **Outliers** — Statistical outlier detection (IQR, Z-score)\n- **Format Issues** — Inconsistent date formats, mixed case, whitespace\n\n## Cleaning Actions\n\n- COALESCE with defaults\n- DEDUP with window functions\n- CAST/SAFE_CAST for type correction\n- TRIM/LOWER/REGEXP_REPLACE for formatting",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: data_autocleaning\ndescription: Automatically detects and fixes common data quality issues\nmetadata:\n  version: 1.5.0\n---\n\n# Data Autocleaning\n\nYou profile datasets and suggest cleaning transformations..."
+        }
+      ],
+      "meta_skill_routers": ["data_quality_orchestrator"],
+      "inputs": ["project_id", "dataset_id", "table_id", "cleaning_profile"],
+      "outputs": ["quality_report", "cleaning_sql", "summary_stats"],
+      "last_updated": "2026-06-03",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "dataform_bigquery",
+      "name": "Dataform BigQuery",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-agent-team",
+      "description": "Helps users create, manage, and debug Dataform workflows in BigQuery, including SQLX definitions, assertions, and incremental tables.",
+      "symptoms": ["dataform error", "SQLX syntax", "incremental table", "dataform assertion"],
+      "documentation": "# Dataform BigQuery\n\nAssists with Dataform development workflows within BigQuery.\n\n## Supported Operations\n\n- Creating SQLX table definitions\n- Writing assertions and data tests\n- Configuring incremental tables\n- Setting up dependencies and refs\n- Debugging compilation errors\n- Managing Dataform repositories",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: dataform_bigquery\ndescription: Assists with Dataform workflows in BigQuery\nmetadata:\n  version: 2.1.0\n---\n\n# Dataform BigQuery\n\nYou are an expert at Dataform development in BigQuery..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["repository_id", "workspace", "sqlx_content"],
+      "outputs": ["sqlx_definition", "assertion_code", "debug_report"],
+      "last_updated": "2026-05-25",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "dbt_bigquery",
+      "name": "dbt BigQuery",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-agent-team",
+      "description": "Supports dbt (data build tool) development targeting BigQuery, including model creation, testing, documentation, and deployment workflows.",
+      "symptoms": ["dbt error", "dbt model", "dbt test failed", "dbt compile"],
+      "documentation": "# dbt BigQuery\n\nComprehensive support for dbt development targeting BigQuery.\n\n## Capabilities\n\n- Model creation (views, tables, incremental, ephemeral)\n- Source and ref configuration\n- Schema tests (unique, not_null, relationships)\n- Custom tests and macros\n- profiles.yml configuration for BigQuery\n- dbt run/test/compile troubleshooting",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: dbt_bigquery\ndescription: Supports dbt development targeting BigQuery\nmetadata:\n  version: 1.8.0\n---\n\n# dbt BigQuery\n\nYou are an expert dbt developer working with BigQuery..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["dbt_project", "model_name", "error_log"],
+      "outputs": ["model_code", "test_definitions", "debug_steps"],
+      "last_updated": "2026-05-30",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "developing_with_bigquery",
+      "name": "Developing with BigQuery",
+      "tier": 3,
+      "category": "development",
+      "owner": "data-agent-team",
+      "description": "General-purpose playbook for BigQuery development, covering SQL best practices, schema design, query optimization, and client library usage.",
+      "symptoms": ["how to BigQuery", "BigQuery best practices", "query optimization", "schema design"],
+      "documentation": "# Developing with BigQuery\n\nA comprehensive guide for developers working with BigQuery.\n\n## Topics Covered\n\n- SQL best practices and anti-patterns\n- Schema design (normalization vs. denormalization)\n- Partitioning and clustering strategies\n- Cost optimization techniques\n- Client library usage (Python, Java, Node.js, Go)\n- IAM and security configuration\n- Scheduled queries and workflows",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: developing_with_bigquery\ndescription: General BigQuery development guidance and best practices\nmetadata:\n  version: 3.0.0\n---\n\n# Developing with BigQuery\n\nYou are a BigQuery development expert..."
+        }
+      ],
+      "meta_skill_routers": ["development_orchestrator"],
+      "inputs": ["question", "code_context", "language_preference"],
+      "outputs": ["guidance", "code_example", "best_practices"],
+      "last_updated": "2026-06-08",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "discovering_gcp_data_assets",
+      "name": "Discovering GCP Data Assets",
+      "tier": 2,
+      "category": "data-catalog",
+      "owner": "data-agent-team",
+      "description": "Helps users discover and explore data assets across GCP using Data Catalog, INFORMATION_SCHEMA, and project-level metadata.",
+      "symptoms": ["find data", "data catalog", "what tables exist", "discover datasets"],
+      "documentation": "# Discovering GCP Data Assets\n\nHelps users find and understand data assets across their GCP organization.\n\n## Discovery Methods\n\n- **Data Catalog** — Search by tag, schema, or description\n- **INFORMATION_SCHEMA** — Programmatic metadata queries\n- **Asset Inventory** — Cross-project resource discovery\n\n## Features\n\n- Full-text search across table descriptions\n- Schema exploration and comparison\n- Lineage tracking\n- Usage statistics and popularity metrics",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: discovering_gcp_data_assets\ndescription: Discover and explore GCP data assets\nmetadata:\n  version: 1.3.0\n---\n\n# Discovering GCP Data Assets\n\nYou help users find and understand their data..."
+        }
+      ],
+      "meta_skill_routers": ["data_quality_orchestrator"],
+      "inputs": ["search_query", "project_scope", "asset_type"],
+      "outputs": ["asset_list", "schema_details", "usage_stats"],
+      "last_updated": "2026-05-18",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "gcloud_auth_verification",
+      "name": "gcloud Auth Verification",
+      "tier": 1,
+      "category": "infrastructure",
+      "owner": "data-agent-team",
+      "description": "Verifies and troubleshoots gcloud CLI authentication, application default credentials, and service account configurations.",
+      "symptoms": ["auth error", "permission denied", "credentials expired", "gcloud login"],
+      "documentation": "# gcloud Auth Verification\n\nDiagnoses and resolves authentication issues with the gcloud CLI and application default credentials.\n\n## Checks Performed\n\n1. `gcloud auth list` — Active account verification\n2. `gcloud auth application-default print-access-token` — ADC validation\n3. Service account key file verification\n4. Quota project configuration\n5. API enablement status",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcloud_auth_verification\ndescription: Verifies gcloud authentication and credentials\nmetadata:\n  version: 1.0.0\n---\n\n# gcloud Auth Verification\n\nYou diagnose and resolve authentication issues..."
+        }
+      ],
+      "meta_skill_routers": ["infra_orchestrator"],
+      "inputs": ["error_message", "gcloud_config"],
+      "outputs": ["auth_status", "fix_steps", "verification_result"],
+      "last_updated": "2026-04-15",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "gcp_composer_troubleshooting",
+      "name": "GCP Composer Troubleshooting",
+      "tier": 3,
+      "category": "orchestration",
+      "owner": "data-agent-team",
+      "description": "Troubleshooting playbook for Cloud Composer (managed Airflow) environments, covering DAG failures, environment health, and dependency issues.",
+      "symptoms": ["DAG failed", "Composer error", "Airflow task failed", "worker pod crash"],
+      "documentation": "# GCP Composer Troubleshooting\n\nDiagnose and resolve issues with Cloud Composer environments.\n\n## Common Issues\n\n- DAG import errors\n- Task execution failures\n- Worker pod OOM crashes\n- PyPI dependency conflicts\n- Webserver connectivity issues\n- Environment upgrade failures\n\n## Diagnostic Steps\n\n1. Check DAG processor logs\n2. Inspect task instance logs\n3. Review worker pod health\n4. Validate environment configuration\n5. Check GKE cluster status",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_composer_troubleshooting\ndescription: Troubleshooting playbook for Cloud Composer\nmetadata:\n  version: 1.4.0\n---\n\n# GCP Composer Troubleshooting\n\nYou diagnose and resolve Cloud Composer issues..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["environment_name", "dag_id", "task_id", "error_log"],
+      "outputs": ["diagnosis", "fix_steps", "health_report"],
+      "last_updated": "2026-06-05",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "gcp_data_pipelines",
+      "name": "GCP Data Pipelines",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-agent-team",
+      "description": "Assists with designing and implementing data pipelines using GCP services including Dataflow, Pub/Sub, BigQuery, and Cloud Storage.",
+      "symptoms": ["pipeline design", "data flow architecture", "ETL pipeline"],
+      "documentation": "# GCP Data Pipelines\n\nHelps design and implement end-to-end data pipelines on GCP.\n\n## Pipeline Patterns\n\n- **Batch ETL** — GCS to BigQuery via Dataflow or load jobs\n- **Streaming** — Pub/Sub to BigQuery via Dataflow\n- **Change Data Capture** — Datastream to BigQuery\n- **Federated** — BigLake for multi-cloud queries",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_data_pipelines\ndescription: Design and implement GCP data pipelines\nmetadata:\n  version: 2.0.0\n---\n\n# GCP Data Pipelines\n\nYou help users design and implement data pipelines..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["source_type", "destination", "volume_estimate", "latency_requirement"],
+      "outputs": ["architecture_diagram", "implementation_plan", "cost_estimate"],
+      "last_updated": "2026-05-22",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "gcp_dataflow",
+      "name": "GCP Dataflow",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-agent-team",
+      "description": "Supports development and troubleshooting of Apache Beam pipelines running on Cloud Dataflow, including template creation and job monitoring.",
+      "symptoms": ["Dataflow job failed", "beam pipeline error", "Dataflow slow", "worker startup"],
+      "documentation": "# GCP Dataflow\n\nAssists with Apache Beam / Cloud Dataflow development.\n\n## Capabilities\n\n- Pipeline development (Python and Java SDKs)\n- Flex template creation\n- Job submission and monitoring\n- Performance tuning (autoscaling, shuffle service)\n- Error diagnosis from worker logs",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_dataflow\ndescription: Dataflow pipeline development and troubleshooting\nmetadata:\n  version: 1.6.0\n---\n\n# GCP Dataflow\n\nYou are an expert at Apache Beam and Cloud Dataflow..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["pipeline_code", "job_id", "error_log"],
+      "outputs": ["fix_steps", "pipeline_code", "performance_report"],
+      "last_updated": "2026-05-15",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "gcp_pipeline_orchestration",
+      "name": "GCP Pipeline Orchestration",
+      "tier": 2,
+      "category": "orchestration",
+      "owner": "data-agent-team",
+      "description": "Guides orchestration of complex data pipelines using Cloud Composer, Cloud Workflows, and Cloud Scheduler.",
+      "symptoms": ["orchestrate pipelines", "schedule workflow", "DAG design"],
+      "documentation": "# GCP Pipeline Orchestration\n\nHelps users choose and implement the right orchestration tool.\n\n## Orchestration Options\n\n| Tool | Best For |\n|------|----------|\n| Cloud Composer | Complex DAGs, Airflow ecosystem |\n| Cloud Workflows | Serverless, API-driven workflows |\n| Cloud Scheduler | Simple cron-based triggers |\n| Dataform | SQL-based transformation DAGs |",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_pipeline_orchestration\ndescription: Pipeline orchestration guidance for GCP\nmetadata:\n  version: 1.2.0\n---\n\n# GCP Pipeline Orchestration\n\nYou help users design and implement pipeline orchestration..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["pipeline_complexity", "existing_infra", "requirements"],
+      "outputs": ["tool_recommendation", "architecture_plan", "sample_config"],
+      "last_updated": "2026-05-10",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "gcp_pipeline_resource_provisioning",
+      "name": "GCP Pipeline Resource Provisioning",
+      "tier": 1,
+      "category": "infrastructure",
+      "owner": "data-agent-team",
+      "description": "Automates provisioning of GCP resources needed for data pipelines, including datasets, service accounts, IAM bindings, and API enablement.",
+      "symptoms": ["provision resources", "setup pipeline infra", "enable APIs"],
+      "documentation": "# GCP Pipeline Resource Provisioning\n\nAutomates the setup of GCP infrastructure for data pipelines.\n\n## Resources Managed\n\n- BigQuery datasets and tables\n- Cloud Storage buckets\n- Service accounts and IAM bindings\n- API enablement\n- VPC and networking for Dataflow\n- Pub/Sub topics and subscriptions",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_pipeline_resource_provisioning\ndescription: Automates GCP resource provisioning for pipelines\nmetadata:\n  version: 1.1.0\n---\n\n# GCP Pipeline Resource Provisioning\n\nYou automate the provisioning of GCP resources..."
+        }
+      ],
+      "meta_skill_routers": ["infra_orchestrator"],
+      "inputs": ["pipeline_type", "project_id", "region"],
+      "outputs": ["terraform_config", "provisioning_script", "setup_report"],
+      "last_updated": "2026-04-28",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "gcp_spark",
+      "name": "GCP Spark",
+      "tier": 2,
+      "category": "compute",
+      "owner": "data-agent-team",
+      "description": "Supports Apache Spark development on GCP via Dataproc and BigQuery Spark connector, including job submission, tuning, and debugging.",
+      "symptoms": ["Spark job failed", "Dataproc error", "Spark slow", "Spark BigQuery connector"],
+      "documentation": "# GCP Spark\n\nAssists with Apache Spark development on Google Cloud.\n\n## Supported Environments\n\n- **Dataproc** — Managed Spark clusters\n- **Dataproc Serverless** — On-demand Spark\n- **BigQuery Spark** — Spark stored procedures in BQ\n\n## Capabilities\n\n- PySpark and Scala development\n- BigQuery Spark connector configuration\n- Job submission and monitoring\n- Performance tuning (partitioning, caching, shuffle)",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: gcp_spark\ndescription: Apache Spark development on GCP\nmetadata:\n  version: 1.3.0\n---\n\n# GCP Spark\n\nYou are an expert at Apache Spark on Google Cloud..."
+        }
+      ],
+      "meta_skill_routers": ["pipeline_orchestrator"],
+      "inputs": ["spark_code", "cluster_config", "error_log"],
+      "outputs": ["fix_steps", "optimized_code", "cluster_recommendation"],
+      "last_updated": "2026-05-08",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "managing_python_dependencies",
+      "name": "Managing Python Dependencies",
+      "tier": 1,
+      "category": "infrastructure",
+      "owner": "data-agent-team",
+      "description": "Manages Python dependency resolution for data science and engineering environments, including virtual environments, pip, and Composer PyPI packages.",
+      "symptoms": ["pip install failed", "dependency conflict", "version mismatch", "import error"],
+      "documentation": "# Managing Python Dependencies\n\nResolves Python dependency issues in data engineering contexts.\n\n## Common Scenarios\n\n- Conflicting package versions in Composer\n- Virtual environment setup for local development\n- Requirements.txt / pyproject.toml management\n- Private PyPI repository configuration",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: managing_python_dependencies\ndescription: Python dependency management for data environments\nmetadata:\n  version: 1.0.0\n---\n\n# Managing Python Dependencies\n\nYou resolve Python dependency issues..."
+        }
+      ],
+      "meta_skill_routers": ["infra_orchestrator"],
+      "inputs": ["requirements", "error_log", "environment_type"],
+      "outputs": ["resolved_requirements", "fix_steps", "compatibility_report"],
+      "last_updated": "2026-04-20",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "ml_best_practices",
+      "name": "ML Best Practices",
+      "tier": 3,
+      "category": "machine-learning",
+      "owner": "data-agent-team",
+      "description": "Playbook for machine learning best practices on GCP, covering BigQuery ML, Vertex AI, feature engineering, and model evaluation.",
+      "symptoms": ["ML model performance", "feature engineering", "BigQuery ML", "model evaluation"],
+      "documentation": "# ML Best Practices\n\nGuides users through machine learning best practices on GCP.\n\n## Topics\n\n- Feature engineering with BigQuery\n- BigQuery ML model training and evaluation\n- Vertex AI integration\n- Model versioning and deployment\n- A/B testing and monitoring\n\n## BigQuery ML Models\n\n```sql\nCREATE OR REPLACE MODEL `project.dataset.model_name`\nOPTIONS(\n  model_type='LINEAR_REG',\n  input_label_cols=['target_column']\n) AS\nSELECT * FROM `project.dataset.training_data`;\n```",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: ml_best_practices\ndescription: Machine learning best practices on GCP\nmetadata:\n  version: 1.1.0\n---\n\n# ML Best Practices\n\nYou guide users through ML best practices on GCP..."
+        }
+      ],
+      "meta_skill_routers": ["development_orchestrator"],
+      "inputs": ["ml_task", "data_description", "model_type"],
+      "outputs": ["best_practices", "code_example", "evaluation_plan"],
+      "last_updated": "2026-06-02",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "notebook_guidance",
+      "name": "Notebook Guidance",
+      "tier": 2,
+      "category": "development",
+      "owner": "data-agent-team",
+      "description": "Provides guidance for Jupyter/Colab notebook development, including BigQuery magics, kernel management, and notebook best practices.",
+      "symptoms": ["notebook error", "kernel crash", "BigQuery magic", "Colab setup"],
+      "documentation": "# Notebook Guidance\n\nHelps users work effectively with Jupyter and Colab notebooks.\n\n## Topics\n\n- BigQuery cell magics (`%%bigquery`)\n- Kernel and environment management\n- Notebook organization best practices\n- Parameterized notebooks (Papermill)\n- Vertex AI Workbench configuration",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: notebook_guidance\ndescription: Jupyter/Colab notebook guidance\nmetadata:\n  version: 1.2.0\n---\n\n# Notebook Guidance\n\nYou help users work effectively with notebooks..."
+        }
+      ],
+      "meta_skill_routers": ["development_orchestrator"],
+      "inputs": ["notebook_type", "error_message", "environment"],
+      "outputs": ["guidance", "code_snippet", "config_fix"],
+      "last_updated": "2026-05-12",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "skill_repair",
+      "name": "Skill Repair",
+      "tier": 1,
+      "category": "meta",
+      "owner": "data-agent-team",
+      "description": "Meta-skill that diagnoses and repairs issues with other agent skills, including version conflicts, configuration errors, and runtime failures.",
+      "symptoms": ["skill error", "skill not working", "agent failure", "skill version"],
+      "documentation": "# Skill Repair\n\nA meta-skill that diagnoses and repairs issues with other skills in the agent system.\n\n## Capabilities\n\n- Skill version verification\n- Configuration validation\n- Runtime error diagnosis\n- Skill dependency resolution\n- Automatic skill reload/restart",
+      "assets": [
+        {
+          "name": "SKILL.md",
+          "type": "markdown",
+          "content": "---\nname: skill_repair\ndescription: Diagnoses and repairs agent skill issues\nmetadata:\n  version: 1.0.0\n---\n\n# Skill Repair\n\nYou diagnose and repair issues with other agent skills..."
+        }
+      ],
+      "meta_skill_routers": ["infra_orchestrator"],
+      "inputs": ["skill_name", "error_log", "skill_version"],
+      "outputs": ["diagnosis", "repair_steps", "health_check"],
+      "last_updated": "2026-06-06",
+      "has_skill_md": true,
+      "has_example_queries": false
+    }
+  ],
+  "meta_skill_routers": [
+    {
+      "id": "pipeline_orchestrator",
+      "name": "Pipeline Orchestrator",
+      "description": "Routes data pipeline and ETL-related requests to the appropriate skill for Dataflow, Dataform, dbt, Composer, and Spark workflows.",
+      "sub_skills": ["bigquery_data_transfer_service", "dataform_bigquery", "dbt_bigquery", "gcp_composer_troubleshooting", "gcp_data_pipelines", "gcp_dataflow", "gcp_pipeline_orchestration", "gcp_spark"]
+    },
+    {
+      "id": "development_orchestrator",
+      "name": "Development Orchestrator",
+      "description": "Coordinates developer-focused skills including BigQuery development, data app building, ML guidance, and notebook support.",
+      "sub_skills": ["building_data_apps", "developing_with_bigquery", "ml_best_practices", "notebook_guidance"]
+    },
+    {
+      "id": "data_quality_orchestrator",
+      "name": "Data Quality Orchestrator",
+      "description": "Manages data quality and discovery workflows, including auto-cleaning, data catalog search, and quality profiling.",
+      "sub_skills": ["data_autocleaning", "discovering_gcp_data_assets"]
+    },
+    {
+      "id": "data_safety_orchestrator",
+      "name": "Data Safety Orchestrator",
+      "description": "Coordinates data safety skills that prevent accidental data loss and enforce safety policies.",
+      "sub_skills": ["accidental_data_loss_prevention"]
+    },
+    {
+      "id": "infra_orchestrator",
+      "name": "Infrastructure Orchestrator",
+      "description": "Manages infrastructure-level skills including authentication, resource provisioning, dependency management, and skill repair.",
+      "sub_skills": ["gcloud_auth_verification", "gcp_pipeline_resource_provisioning", "managing_python_dependencies", "skill_repair"]
+    }
+  ]
+}

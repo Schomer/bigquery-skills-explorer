@@ -1,6 +1,7 @@
 /**
  * BQ Skill Explorer — Main Entry Point
  * Initializes the app, loads data, and wires up routing.
+ * Supports switching between multiple skill datasets.
  */
 
 // Styles
@@ -33,26 +34,64 @@ import { GraphView } from './views/GraphView.js';
 import { MapperView } from './views/MapperView.js';
 import { DashboardView } from './views/DashboardView.js';
 
-// Data
-import skillsData from './data/skills.json';
+// Datasets
+import bigquerySkillsData from './data/skills.json';
+import dataAgentSkillsData from './data/data-agent-skills.json';
+
+// ─── Dataset Registry ───────────────────────────────────────────
+
+const DATASETS = {
+  'bigquery': bigquerySkillsData,
+  'data-agent': dataAgentSkillsData,
+};
+
+let activeSkillset = 'bigquery';
+let activeData = DATASETS[activeSkillset];
 
 // ─── Bootstrap ──────────────────────────────────────────────────
 
 const router = new Router();
 const searchEngine = new SearchEngine();
 
-// Build search index
-searchEngine.buildIndex(skillsData.skills);
+// Build search index for initial dataset
+searchEngine.buildIndex(activeData.skills);
 
 // Mount app shell
 const appEl = document.getElementById('app');
-const app = new App(appEl, {
+let app = new App(appEl, {
   router,
-  data: skillsData,
+  data: activeData,
   searchEngine,
+  activeSkillset,
+  onSkillsetChange: switchSkillset,
 });
 
-const viewContainer = app.getViewContainer();
+let viewContainer = app.getViewContainer();
+
+// ─── Dataset Switching ──────────────────────────────────────────
+
+function switchSkillset(skillset) {
+  if (skillset === activeSkillset) return;
+
+  activeSkillset = skillset;
+  activeData = DATASETS[activeSkillset];
+
+  // Rebuild search index
+  searchEngine.buildIndex(activeData.skills);
+
+  // Remount entire app shell with new skillset
+  app = new App(appEl, {
+    router,
+    data: activeData,
+    searchEngine,
+    activeSkillset,
+    onSkillsetChange: switchSkillset,
+  });
+  viewContainer = app.getViewContainer();
+
+  // Re-resolve current route to re-render with new data
+  router.resolve();
+}
 
 // ─── Route Handlers ─────────────────────────────────────────────
 
@@ -71,37 +110,37 @@ function mountView(ViewClass, deps) {
 router
   .on('/explorer', () => {
     return mountView(ExplorerView, {
-      skills: skillsData.skills,
+      skills: activeData.skills,
       router,
     });
   })
   .on('/skill/:id', (params) => {
-    const skill = skillsData.skills.find(s => s.id === params.id);
+    const skill = activeData.skills.find(s => s.id === params.id);
     return mountView(SkillDetailView, {
       skill,
-      skills: skillsData.skills,
-      metaSkillRouters: skillsData.meta_skill_routers,
+      skills: activeData.skills,
+      metaSkillRouters: activeData.meta_skill_routers,
       router,
     });
   })
   .on('/graph', () => {
     return mountView(GraphView, {
-      skills: skillsData.skills,
-      metaSkillRouters: skillsData.meta_skill_routers,
+      skills: activeData.skills,
+      metaSkillRouters: activeData.meta_skill_routers,
       router,
     });
   })
   .on('/mapper', (_params, query) => {
     return mountView(MapperView, {
-      skills: skillsData.skills,
+      skills: activeData.skills,
       router,
       initialQuery: query.q || '',
     });
   })
   .on('/dashboard', () => {
     return mountView(DashboardView, {
-      skills: skillsData.skills,
-      metaSkillRouters: skillsData.meta_skill_routers,
+      skills: activeData.skills,
+      metaSkillRouters: activeData.meta_skill_routers,
       router,
     });
   });
