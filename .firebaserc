@@ -1,3 +1,14 @@
 {
-  "projects": {}
+  "projects": {
+    "default": "hey-data-46df6"
+  },
+  "targets": {
+    "hey-data-46df6": {
+      "hosting": {
+        "bq-skill-explorer": [
+          "bq-skill-explorer"
+        ]
+      }
+    }
+  }
 }
