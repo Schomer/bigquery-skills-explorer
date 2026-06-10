@@ -2,6 +2,8 @@
  * BQ Skill Explorer — Explorer View (3-Column Finder)
  */
 
+import { renderBreadcrumb } from '../components/Breadcrumb.js';
+
 const TIER_CONFIG = {
   1: { name: 'Infrastructure', icon: 'dns', description: 'Core platform components' },
   2: { name: 'Components', icon: 'widgets', description: 'Reusable analysis modules' },
@@ -27,9 +29,8 @@ export class ExplorerView {
   render() {
     this.container.innerHTML = `
       <div class="explorer view-enter">
-        <div class="explorer__breadcrumb" id="explorer-breadcrumb">
-          <span class="material-symbols-outlined" style="font-size: 18px; color: var(--on-surface-muted);">home</span>
-          <span class="explorer__breadcrumb-item explorer__breadcrumb-item--active">All Tiers</span>
+        <div id="explorer-breadcrumb">
+          ${this.getBreadcrumbHtml()}
         </div>
         <div class="explorer__columns" id="explorer-columns">
           <div class="explorer__column" id="tier-column">
@@ -44,6 +45,26 @@ export class ExplorerView {
     `;
 
     this.renderTierColumn();
+  }
+
+  getBreadcrumbHtml() {
+    const items = [
+      { label: 'Explorer', icon: 'account_tree', path: this.selectedTier ? '/explorer' : null },
+    ];
+
+    if (this.selectedTier) {
+      if (this.selectedCategory) {
+        items.push({ label: TIER_CONFIG[this.selectedTier].name });
+      } else {
+        items.push({ label: TIER_CONFIG[this.selectedTier].name });
+      }
+    }
+
+    if (this.selectedCategory) {
+      items.push({ label: this.formatCategory(this.selectedCategory) });
+    }
+
+    return renderBreadcrumb(items);
   }
 
   renderTierColumn() {
@@ -79,7 +100,6 @@ export class ExplorerView {
   renderColumns() {
     const columnsEl = this.container.querySelector('#explorer-columns');
 
-    // Rebuild: Tier column + Category column + (optionally) Skills column
     let html = `
       <div class="explorer__column" id="tier-column">
         <div class="explorer__column-header">
@@ -116,20 +136,16 @@ export class ExplorerView {
 
     columnsEl.innerHTML = html;
 
-    // Re-render tier items
     this.renderTierItems();
 
-    // Render category items
     if (this.selectedTier !== null) {
       this.renderCategoryItems();
     }
 
-    // Render skill items
     if (this.selectedCategory !== null) {
       this.renderSkillItems();
     }
 
-    // Update breadcrumb
     this.updateBreadcrumb();
   }
 
@@ -223,41 +239,18 @@ export class ExplorerView {
 
   updateBreadcrumb() {
     const bc = this.container.querySelector('#explorer-breadcrumb');
-    let items = `
-      <span class="material-symbols-outlined" style="font-size: 18px; color: var(--on-surface-muted);">home</span>
-      <span class="explorer__breadcrumb-item ${!this.selectedTier ? 'explorer__breadcrumb-item--active' : ''}"
-            id="bc-root">All Tiers</span>
-    `;
+    bc.innerHTML = this.getBreadcrumbHtml();
 
-    if (this.selectedTier) {
-      items += `
-        <span class="material-symbols-outlined explorer__breadcrumb-separator">chevron_right</span>
-        <span class="explorer__breadcrumb-item ${!this.selectedCategory ? 'explorer__breadcrumb-item--active' : ''}"
-              id="bc-tier">${TIER_CONFIG[this.selectedTier].name}</span>
-      `;
+    // Bind breadcrumb click on the Explorer link to reset
+    const explorerLink = bc.querySelector('a[href="#/explorer"]');
+    if (explorerLink) {
+      explorerLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.selectedTier = null;
+        this.selectedCategory = null;
+        this.renderColumns();
+      });
     }
-
-    if (this.selectedCategory) {
-      items += `
-        <span class="material-symbols-outlined explorer__breadcrumb-separator">chevron_right</span>
-        <span class="explorer__breadcrumb-item explorer__breadcrumb-item--active"
-              id="bc-category">${this.formatCategory(this.selectedCategory)}</span>
-      `;
-    }
-
-    bc.innerHTML = items;
-
-    // Bind breadcrumb navigation
-    bc.querySelector('#bc-root')?.addEventListener('click', () => {
-      this.selectedTier = null;
-      this.selectedCategory = null;
-      this.renderColumns();
-    });
-
-    bc.querySelector('#bc-tier')?.addEventListener('click', () => {
-      this.selectedCategory = null;
-      this.renderColumns();
-    });
   }
 
   formatCategory(cat) {

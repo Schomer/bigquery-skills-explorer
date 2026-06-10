@@ -4,6 +4,7 @@
 
 import { marked } from 'marked';
 import { codeViewer } from '../components/CodeViewerModal.js';
+import { renderBreadcrumb } from '../components/Breadcrumb.js';
 
 const ASSET_ICONS = {
   python: 'code',
@@ -54,11 +55,11 @@ export class SkillDetailView {
     this.container.innerHTML = `
       <div class="skill-detail view-enter">
         <div class="skill-detail__main">
+          ${renderBreadcrumb([
+            { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
+            { label: skill.name },
+          ])}
           <div class="skill-detail__header">
-            <button class="skill-detail__back" id="detail-back">
-              <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
-              Back to Explorer
-            </button>
             <h1 class="skill-detail__title">${skill.name}</h1>
             <p class="skill-detail__description">${skill.description}</p>
             <div class="skill-detail__tags">
@@ -202,10 +203,6 @@ export class SkillDetailView {
   }
 
   bindEvents() {
-    // Back button
-    this.container.querySelector('#detail-back')?.addEventListener('click', () => {
-      this.router.navigate('/explorer');
-    });
 
     // Asset clicks
     this.container.querySelectorAll('.skill-detail__asset').forEach(el => {

@@ -2,6 +2,8 @@
  * BQ Skill Explorer — Graph View (Force-Directed SVG Network)
  */
 
+import { renderBreadcrumb } from '../components/Breadcrumb.js';
+
 export class GraphView {
   /**
    * @param {HTMLElement} container
@@ -89,6 +91,10 @@ export class GraphView {
   render() {
     this.container.innerHTML = `
       <div class="graph-view view-enter">
+        ${renderBreadcrumb([
+          { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
+          { label: 'Dependency Graph' },
+        ])}
         <svg class="graph-view__svg" id="graph-svg">
           <defs>
             <filter id="node-shadow" x="-20%" y="-20%" width="140%" height="140%">

@@ -2,6 +2,8 @@
  * BQ Skill Explorer — Health & Changelog Dashboard
  */
 
+import { renderBreadcrumb } from '../components/Breadcrumb.js';
+
 export class DashboardView {
   /**
    * @param {HTMLElement} container
@@ -44,6 +46,10 @@ export class DashboardView {
 
     this.container.innerHTML = `
       <div class="dashboard view-enter">
+        ${renderBreadcrumb([
+          { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
+          { label: 'Health Dashboard' },
+        ])}
         <h1 class="dashboard__title">
           <span class="material-symbols-outlined dashboard__title-icon">monitor_heart</span>
           Health & Changelog Dashboard

@@ -3,6 +3,8 @@
  * Enter any data-oriented prompt and see which skills the routing system would invoke.
  */
 
+import { renderBreadcrumb } from '../components/Breadcrumb.js';
+
 export class MapperView {
   /**
    * @param {HTMLElement} container
@@ -88,6 +90,10 @@ export class MapperView {
   render() {
     this.container.innerHTML = `
       <div class="mapper view-enter">
+        ${renderBreadcrumb([
+          { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
+          { label: 'Skill Routing Test' },
+        ])}
         <div class="mapper__header">
           <h1 class="mapper__title">Skill Routing Test</h1>
           <p class="mapper__subtitle">Enter any prompt to see which skills the routing system would invoke</p>
