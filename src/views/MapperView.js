@@ -3,7 +3,7 @@
  * Enter any data-oriented prompt and see which skills the routing system would invoke.
  */
 
-import { renderBreadcrumb } from '../components/Breadcrumb.js';
+import { renderBreadcrumb, getSkillsetLabel } from '../components/Breadcrumb.js';
 
 export class MapperView {
   /**
@@ -16,6 +16,7 @@ export class MapperView {
     this.metaSkillRouters = deps.metaSkillRouters || [];
     this.router = deps.router;
     this.query = deps.initialQuery || '';
+    this.activeSkillset = deps.activeSkillset || 'data-agent';
 
     // Build keyword index for smarter matching
     this.buildKeywordIndex();
@@ -91,6 +92,7 @@ export class MapperView {
     this.container.innerHTML = `
       <div class="mapper view-enter">
         ${renderBreadcrumb([
+          { label: getSkillsetLabel(this.activeSkillset), icon: 'inventory_2', path: '/explorer' },
           { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
           { label: 'Skill Routing Test' },
         ])}

@@ -3,6 +3,21 @@
  * Generates a consistent breadcrumb bar across all views.
  */
 
+const SKILLSET_LABELS = {
+  'bigquery': 'BigQuery Skills',
+  'data-agent': 'Data Agent Kit',
+  'google-cloud': 'Google Cloud Skills',
+};
+
+/**
+ * Get the display label for a skillset ID.
+ * @param {string} skillsetId
+ * @returns {string}
+ */
+export function getSkillsetLabel(skillsetId) {
+  return SKILLSET_LABELS[skillsetId] || 'Skills';
+}
+
 /**
  * Render a breadcrumb HTML string.
  * @param {Array<{label: string, icon?: string, path?: string}>} items - Breadcrumb segments.

@@ -2,7 +2,7 @@
  * BQ Skill Explorer — Graph View (Force-Directed SVG Network)
  */
 
-import { renderBreadcrumb } from '../components/Breadcrumb.js';
+import { renderBreadcrumb, getSkillsetLabel } from '../components/Breadcrumb.js';
 
 export class GraphView {
   /**
@@ -14,6 +14,7 @@ export class GraphView {
     this.skills = deps.skills;
     this.metaSkillRouters = deps.metaSkillRouters;
     this.router = deps.router;
+    this.activeSkillset = deps.activeSkillset || 'data-agent';
 
     // Physics state
     this.nodes = [];
@@ -92,6 +93,7 @@ export class GraphView {
     this.container.innerHTML = `
       <div class="graph-view view-enter">
         ${renderBreadcrumb([
+          { label: getSkillsetLabel(this.activeSkillset), icon: 'inventory_2', path: '/explorer' },
           { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
           { label: 'Dependency Graph' },
         ])}

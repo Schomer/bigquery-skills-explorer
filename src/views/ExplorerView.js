@@ -2,7 +2,7 @@
  * BQ Skill Explorer — Explorer View (3-Column Finder)
  */
 
-import { renderBreadcrumb } from '../components/Breadcrumb.js';
+import { renderBreadcrumb, getSkillsetLabel } from '../components/Breadcrumb.js';
 
 const TIER_CONFIG = {
   1: { name: 'Infrastructure', icon: 'dns', description: 'Core platform components' },
@@ -19,6 +19,7 @@ export class ExplorerView {
     this.container = container;
     this.skills = deps.skills;
     this.router = deps.router;
+    this.activeSkillset = deps.activeSkillset || 'data-agent';
 
     this.selectedTier = null;
     this.selectedCategory = null;
@@ -49,6 +50,7 @@ export class ExplorerView {
 
   getBreadcrumbHtml() {
     const items = [
+      { label: getSkillsetLabel(this.activeSkillset), icon: 'inventory_2' },
       { label: 'Explorer', icon: 'account_tree', path: this.selectedTier ? '/explorer' : null },
     ];
 

@@ -5,7 +5,7 @@
 
 import { marked } from 'marked';
 import hljs from 'highlight.js';
-import { renderBreadcrumb } from '../components/Breadcrumb.js';
+import { renderBreadcrumb, getSkillsetLabel } from '../components/Breadcrumb.js';
 
 const ASSET_ICONS = {
   python: 'code',
@@ -48,6 +48,7 @@ export class SkillDetailView {
     this.skills = deps.skills;
     this.metaSkillRouters = deps.metaSkillRouters;
     this.router = deps.router;
+    this.activeSkillset = deps.activeSkillset || 'data-agent';
     this.activeAssetIndex = null;
 
     this.render();
@@ -79,6 +80,7 @@ export class SkillDetailView {
       <div class="skill-detail view-enter">
         <div class="skill-detail__main">
           ${renderBreadcrumb([
+            { label: getSkillsetLabel(this.activeSkillset), icon: 'inventory_2', path: '/explorer' },
             { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
             { label: skill.name },
           ])}

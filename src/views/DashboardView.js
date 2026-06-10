@@ -2,7 +2,7 @@
  * BQ Skill Explorer — Health & Changelog Dashboard
  */
 
-import { renderBreadcrumb } from '../components/Breadcrumb.js';
+import { renderBreadcrumb, getSkillsetLabel } from '../components/Breadcrumb.js';
 
 export class DashboardView {
   /**
@@ -14,6 +14,7 @@ export class DashboardView {
     this.skills = deps.skills;
     this.metaSkillRouters = deps.metaSkillRouters;
     this.router = deps.router;
+    this.activeSkillset = deps.activeSkillset || 'data-agent';
     this.activeFilter = null;
 
     this.computeMetrics();
@@ -47,6 +48,7 @@ export class DashboardView {
     this.container.innerHTML = `
       <div class="dashboard view-enter">
         ${renderBreadcrumb([
+          { label: getSkillsetLabel(this.activeSkillset), icon: 'inventory_2', path: '/explorer' },
           { label: 'Explorer', icon: 'account_tree', path: '/explorer' },
           { label: 'Health Dashboard' },
         ])}

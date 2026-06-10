@@ -114,6 +114,7 @@ router
     return mountView(ExplorerView, {
       skills: activeData.skills,
       router,
+      activeSkillset,
     });
   })
   .on('/skill/:id', (params) => {
@@ -123,6 +124,7 @@ router
       skills: activeData.skills,
       metaSkillRouters: activeData.meta_skill_routers,
       router,
+      activeSkillset,
     });
   })
   .on('/graph', () => {
@@ -130,6 +132,7 @@ router
       skills: activeData.skills,
       metaSkillRouters: activeData.meta_skill_routers,
       router,
+      activeSkillset,
     });
   })
   .on('/mapper', (_params, query) => {
@@ -138,6 +141,7 @@ router
       metaSkillRouters: activeData.meta_skill_routers,
       router,
       initialQuery: query.q || '',
+      activeSkillset,
     });
   })
   .on('/dashboard', () => {
@@ -145,6 +149,7 @@ router
       skills: activeData.skills,
       metaSkillRouters: activeData.meta_skill_routers,
       router,
+      activeSkillset,
     });
   });
 
