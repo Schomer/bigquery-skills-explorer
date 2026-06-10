@@ -22,11 +22,10 @@ export class TopBar {
 
   render() {
     const SKILLSET_META = {
-      'bigquery': { label: 'BigQuery Skills', icon: 'database' },
       'data-agent': { label: 'Data Agent Kit', icon: 'smart_toy' },
       'google-cloud': { label: 'Google Cloud Skills', icon: 'cloud' },
     };
-    const meta = SKILLSET_META[this.activeSkillset] || SKILLSET_META['bigquery'];
+    const meta = SKILLSET_META[this.activeSkillset] || SKILLSET_META['data-agent'];
 
     this.container.innerHTML = `
       <div class="top-bar__logo">
@@ -38,15 +37,6 @@ export class TopBar {
             <span class="material-symbols-outlined top-bar__skillset-arrow">expand_more</span>
           </button>
           <div class="top-bar__skillset-menu" id="skillset-menu">
-            <div class="top-bar__skillset-menu-item ${this.activeSkillset === 'bigquery' ? 'top-bar__skillset-menu-item--active' : ''}"
-                 data-skillset="bigquery">
-              <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-blue);">database</span>
-              <div class="top-bar__skillset-menu-content">
-                <div class="top-bar__skillset-menu-name">BigQuery Skills</div>
-                <div class="top-bar__skillset-menu-desc">SRE diagnostics, optimization, and monitoring</div>
-              </div>
-              ${this.activeSkillset === 'bigquery' ? '<span class="material-symbols-outlined" style="font-size: 18px; color: var(--google-blue);">check</span>' : ''}
-            </div>
             <div class="top-bar__skillset-menu-item ${this.activeSkillset === 'data-agent' ? 'top-bar__skillset-menu-item--active' : ''}"
                  data-skillset="data-agent">
               <span class="material-symbols-outlined" style="font-size: 20px; color: var(--google-green);">smart_toy</span>

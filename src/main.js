@@ -47,7 +47,7 @@ const DATASETS = {
   'google-cloud': googleCloudSkillsData,
 };
 
-let activeSkillset = 'bigquery';
+let activeSkillset = 'data-agent';
 let activeData = DATASETS[activeSkillset];
 
 // ─── Bootstrap ──────────────────────────────────────────────────
