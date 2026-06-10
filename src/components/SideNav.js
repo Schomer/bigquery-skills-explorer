@@ -11,7 +11,7 @@ export class SideNav {
     this.routes = [
       { path: '/explorer', icon: 'account_tree', label: 'Explorer' },
       { path: '/graph', icon: 'hub', label: 'Graph' },
-      { path: '/mapper', icon: 'healing', label: 'Mapper' },
+      { path: '/mapper', icon: 'science', label: 'Test' },
       { path: '/dashboard', icon: 'monitor_heart', label: 'Dashboard' },
     ];
 

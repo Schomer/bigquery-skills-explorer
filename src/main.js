@@ -133,6 +133,7 @@ router
   .on('/mapper', (_params, query) => {
     return mountView(MapperView, {
       skills: activeData.skills,
+      metaSkillRouters: activeData.meta_skill_routers,
       router,
       initialQuery: query.q || '',
     });
