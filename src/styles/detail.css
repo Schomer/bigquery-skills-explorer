@@ -1,0 +1,275 @@
+/* ============================================
+   BQ Skill Explorer — Skill Detail View
+   ============================================ */
+
+.skill-detail {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-24);
+  padding: var(--space-24);
+  height: 100%;
+  overflow: hidden;
+}
+
+.skill-detail__main {
+  overflow-y: auto;
+  padding-right: var(--space-16);
+}
+
+.skill-detail__header {
+  margin-bottom: var(--space-24);
+}
+
+.skill-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--google-blue);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--border-radius-xs);
+  margin-bottom: var(--space-16);
+  transition: background-color var(--transition-fast);
+}
+
+.skill-detail__back:hover {
+  background-color: var(--google-blue-light);
+}
+
+.skill-detail__title {
+  font-size: var(--font-size-xxl);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: var(--space-8);
+}
+
+.skill-detail__description {
+  font-size: var(--font-size-lg);
+  color: var(--on-surface-variant);
+  line-height: var(--line-height-relaxed);
+  margin-bottom: var(--space-16);
+}
+
+.skill-detail__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+}
+
+/* Markdown content area */
+.skill-detail__docs {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-32);
+}
+
+.skill-detail__docs h1 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--space-16);
+  padding-bottom: var(--space-12);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.skill-detail__docs h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-top: var(--space-24);
+  margin-bottom: var(--space-12);
+}
+
+.skill-detail__docs h3 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-top: var(--space-20);
+  margin-bottom: var(--space-8);
+}
+
+.skill-detail__docs p {
+  margin-bottom: var(--space-12);
+  line-height: var(--line-height-relaxed);
+}
+
+.skill-detail__docs ul,
+.skill-detail__docs ol {
+  margin-bottom: var(--space-12);
+  padding-left: var(--space-24);
+}
+
+.skill-detail__docs ul {
+  list-style: disc;
+}
+
+.skill-detail__docs ol {
+  list-style: decimal;
+}
+
+.skill-detail__docs li {
+  margin-bottom: var(--space-4);
+  line-height: var(--line-height-relaxed);
+}
+
+.skill-detail__docs code {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface-variant);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-xs);
+}
+
+.skill-detail__docs pre {
+  margin-bottom: var(--space-16);
+  border-radius: var(--border-radius-sm);
+  overflow-x: auto;
+}
+
+.skill-detail__docs pre code {
+  display: block;
+  padding: var(--space-16);
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  line-height: var(--line-height-relaxed);
+  border-radius: var(--border-radius-sm);
+}
+
+.skill-detail__docs table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--space-16);
+}
+
+.skill-detail__docs th,
+.skill-detail__docs td {
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.skill-detail__docs th {
+  background-color: var(--surface-variant);
+  font-weight: 600;
+}
+
+/* Sidebar */
+.skill-detail__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  overflow-y: auto;
+}
+
+.skill-detail__sidebar .card {
+  flex-shrink: 0;
+}
+
+.skill-detail__meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.skill-detail__meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-12);
+}
+
+.skill-detail__meta-icon {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.skill-detail__meta-label {
+  font-size: var(--font-size-sm);
+  color: var(--on-surface-muted);
+}
+
+.skill-detail__meta-value {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+/* Asset list */
+.skill-detail__asset {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border: 1px solid var(--border-color-light);
+  margin-bottom: var(--space-8);
+}
+
+.skill-detail__asset:hover {
+  background-color: var(--google-blue-light);
+  border-color: var(--google-blue-50);
+}
+
+.skill-detail__asset-icon {
+  font-size: 20px;
+  color: var(--google-blue);
+}
+
+.skill-detail__asset-name {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  flex: 1;
+}
+
+.skill-detail__asset-type {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+  text-transform: uppercase;
+}
+
+/* Related routers */
+.skill-detail__router-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--border-radius-sm);
+  color: var(--google-blue);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  font-weight: 500;
+}
+
+.skill-detail__router-link:hover {
+  background-color: var(--google-blue-light);
+}
+
+/* IO tags */
+.skill-detail__io-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+  margin-top: var(--space-8);
+}
+
+.skill-detail__io-tag {
+  font-family: var(--font-code);
+  font-size: var(--font-size-xs);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--border-radius-xs);
+  background-color: var(--surface-variant);
+}
+
+.skill-detail__io-tag--input {
+  background-color: var(--google-blue-light);
+  color: var(--google-blue);
+}
+
+.skill-detail__io-tag--output {
+  background-color: var(--google-green-light);
+  color: var(--google-green);
+}

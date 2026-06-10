@@ -1,0 +1,139 @@
+/* ============================================
+   BQ Skill Explorer — Code Viewer Modal
+   ============================================ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(32, 33, 36, 0.6);
+  z-index: var(--z-modal-backdrop);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.modal-backdrop--visible {
+  opacity: 1;
+}
+
+.code-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: min(90vw, 960px);
+  max-height: 85vh;
+  background-color: var(--surface);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--elevation-4);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+.code-modal--visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.code-modal__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-16) var(--space-20);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.code-modal__filename {
+  font-family: var(--font-code);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  flex: 1;
+}
+
+.code-modal__lang-badge {
+  font-size: var(--font-size-xs);
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--border-radius-xs);
+  background-color: var(--google-blue-light);
+  color: var(--google-blue);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.code-modal__copy-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-12);
+  border-radius: var(--border-radius-xs);
+  font-size: var(--font-size-sm);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.code-modal__copy-btn:hover {
+  background-color: var(--surface-variant);
+}
+
+.code-modal__close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--border-radius-full);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  color: var(--on-surface-variant);
+}
+
+.code-modal__close-btn:hover {
+  background-color: var(--surface-variant);
+}
+
+.code-modal__body {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.code-modal__code-wrapper {
+  display: flex;
+  min-height: 100%;
+}
+
+.code-modal__line-numbers {
+  padding: var(--space-16) var(--space-12);
+  background-color: #252526;
+  color: #858585;
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  text-align: right;
+  user-select: none;
+  flex-shrink: 0;
+  border-right: 1px solid #3c3c3c;
+}
+
+.code-modal__code {
+  flex: 1;
+  overflow-x: auto;
+}
+
+.code-modal__code pre {
+  margin: 0;
+  padding: var(--space-16);
+  background-color: #1e1e1e;
+  min-height: 100%;
+}
+
+.code-modal__code code {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed);
+  color: #d4d4d4;
+}

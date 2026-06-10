@@ -1,0 +1,170 @@
+/* ============================================
+   BQ Skill Explorer — Explorer View (Finder)
+   ============================================ */
+
+.explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.explorer__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-20);
+  font-size: var(--font-size-sm);
+  color: var(--on-surface-variant);
+  border-bottom: 1px solid var(--border-color-light);
+  background-color: var(--surface);
+  flex-shrink: 0;
+}
+
+.explorer__breadcrumb-item {
+  cursor: pointer;
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--border-radius-xs);
+  transition: background-color var(--transition-fast);
+}
+
+.explorer__breadcrumb-item:hover {
+  background-color: var(--surface-variant);
+}
+
+.explorer__breadcrumb-item--active {
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+.explorer__breadcrumb-separator {
+  color: var(--on-surface-muted);
+  font-size: 18px;
+}
+
+.explorer__columns {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.explorer__column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color-light);
+  min-width: 240px;
+  max-width: 400px;
+  background-color: var(--surface);
+  animation: columnSlideIn var(--transition-slow) ease;
+}
+
+.explorer__column:last-child {
+  border-right: none;
+  max-width: none;
+  flex: 2;
+}
+
+@keyframes columnSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.explorer__column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-16);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color-light);
+  flex-shrink: 0;
+}
+
+.explorer__column-header-icon {
+  font-size: 18px;
+}
+
+.explorer__column-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) 0;
+}
+
+.explorer__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-12) var(--space-16);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  border-left: 3px solid transparent;
+  position: relative;
+}
+
+.explorer__item:hover {
+  background-color: var(--surface-variant);
+}
+
+.explorer__item--selected {
+  background-color: var(--google-blue-light);
+  border-left-color: var(--google-blue);
+}
+
+.explorer__item-icon {
+  font-size: 20px;
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
+}
+
+.explorer__item--selected .explorer__item-icon {
+  color: var(--google-blue);
+}
+
+.explorer__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.explorer__item-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.explorer__item-meta {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+  margin-top: var(--space-2);
+}
+
+.explorer__item-arrow {
+  font-size: 18px;
+  color: var(--on-surface-muted);
+  flex-shrink: 0;
+}
+
+.explorer__item-count {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+  background-color: var(--surface-variant);
+  padding: var(--space-2) var(--space-8);
+  border-radius: var(--border-radius-full);
+  flex-shrink: 0;
+}
+
+/* Tier color indicators */
+.explorer__item--tier-1 .explorer__item-icon { color: var(--google-red); }
+.explorer__item--tier-2 .explorer__item-icon { color: var(--google-yellow); }
+.explorer__item--tier-3 .explorer__item-icon { color: var(--google-green); }

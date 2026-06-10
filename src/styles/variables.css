@@ -1,0 +1,90 @@
+/* ============================================
+   BQ Skill Explorer — CSS Custom Properties
+   Google Material Design 3 Theming
+   ============================================ */
+
+:root {
+  /* Google Brand Colors */
+  --google-blue: #1a73e8;
+  --google-blue-light: #e8f0fe;
+  --google-blue-hover: #1557b0;
+  --google-blue-50: #d2e3fc;
+  --google-red: #ea4335;
+  --google-red-light: #fce8e6;
+  --google-yellow: #fbbc04;
+  --google-yellow-light: #fef7e0;
+  --google-green: #34a853;
+  --google-green-light: #e6f4ea;
+
+  /* Surfaces & Backgrounds */
+  --surface: #ffffff;
+  --background: #f8f9fa;
+  --surface-variant: #f1f3f4;
+  --surface-container: #eef0f2;
+  --on-surface: #202124;
+  --on-surface-variant: #5f6368;
+  --on-surface-muted: #80868b;
+
+  /* Typography */
+  --font-primary: 'Inter', 'Roboto', Arial, sans-serif;
+  --font-code: 'Roboto Mono', monospace;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --font-size-xxl: 28px;
+  --font-size-display: 36px;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Spacing Scale */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+
+  /* Elevation (Material Design 3) */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+  --elevation-2: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
+  --elevation-3: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+  --elevation-4: 0 2px 3px 0 rgba(60,64,67,0.3), 0 6px 10px 4px rgba(60,64,67,0.15);
+
+  /* Borders */
+  --border-radius-xs: 4px;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 24px;
+  --border-radius-full: 9999px;
+  --border-color: #dadce0;
+  --border-color-light: #e8eaed;
+
+  /* Transitions */
+  --transition-fast: 100ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-spring: 300ms cubic-bezier(0.2, 0, 0, 1);
+
+  /* Layout Dimensions */
+  --sidenav-width: 72px;
+  --topbar-height: 64px;
+  --content-max-width: 1400px;
+
+  /* Z-index scale */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+}

@@ -1,0 +1,350 @@
+{
+  "skills": [
+    {
+      "id": "investigate_slow_query",
+      "name": "Investigate Slow Query",
+      "tier": 3,
+      "category": "query-diagnostics",
+      "owner": "sre-routing-pod",
+      "description": "Symptom-driven playbook for handling 'Query too complex' and latency errors. Walks through query plan analysis, slot usage, and optimization recommendations.",
+      "symptoms": ["query too complex", "slow query", "high latency", "query timeout"],
+      "documentation": "# Investigate Slow Query\n\nThis skill provides a systematic approach to diagnosing and resolving slow BigQuery queries.\n\n## When to Use\n\n- Query execution time exceeds SLO thresholds\n- Users report `Query too complex` errors\n- Slot utilization spikes correlated with specific jobs\n\n## Diagnostic Steps\n\n1. **Retrieve Job Metadata** — Pull `INFORMATION_SCHEMA.JOBS` for the target `job_id`\n2. **Analyze Query Plan** — Examine stage-level breakdown for bottlenecks\n3. **Check Slot Usage** — Compare against project reservation limits\n4. **Identify Optimization** — Suggest partitioning, clustering, or query rewrites\n\n## Example Query\n\n```sql\nSELECT\n  job_id,\n  total_bytes_processed,\n  total_slot_ms,\n  TIMESTAMP_DIFF(end_time, start_time, SECOND) AS duration_sec\nFROM `region-us`.INFORMATION_SCHEMA.JOBS\nWHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)\nORDER BY total_slot_ms DESC\nLIMIT 20;\n```\n\n## Escalation Path\n\nIf optimization suggestions do not resolve the issue, escalate to the **Capacity Planning** team with the diagnostic report attached.",
+      "assets": [
+        {
+          "name": "compare_jobs.py",
+          "type": "python",
+          "content": "\"\"\"Compare two BigQuery job executions side-by-side.\"\"\"\n\nfrom google.cloud import bigquery\n\n\ndef compare_jobs(project_id: str, job_id_a: str, job_id_b: str) -> dict:\n    \"\"\"Compare metrics between two BQ jobs.\n    \n    Args:\n        project_id: GCP project ID\n        job_id_a: First job ID to compare\n        job_id_b: Second job ID to compare\n    \n    Returns:\n        Dictionary with comparison metrics\n    \"\"\"\n    client = bigquery.Client(project=project_id)\n    \n    job_a = client.get_job(job_id_a)\n    job_b = client.get_job(job_id_b)\n    \n    return {\n        'bytes_diff': job_a.total_bytes_processed - job_b.total_bytes_processed,\n        'slot_diff': job_a.slot_millis - job_b.slot_millis,\n        'duration_diff': (\n            (job_a.ended - job_a.started).total_seconds() -\n            (job_b.ended - job_b.started).total_seconds()\n        ),\n        'job_a': _extract_metrics(job_a),\n        'job_b': _extract_metrics(job_b),\n    }\n\n\ndef _extract_metrics(job) -> dict:\n    return {\n        'job_id': job.job_id,\n        'bytes_processed': job.total_bytes_processed,\n        'slot_ms': job.slot_millis,\n        'duration_sec': (job.ended - job.started).total_seconds(),\n        'state': job.state,\n        'query': job.query[:200],\n    }"
+        },
+        {
+          "name": "diagnostic_queries.sql",
+          "type": "sql",
+          "content": "-- ===========================================\n-- Slow Query Diagnostic Templates\n-- ===========================================\n\n-- 1. Top consumers by slot time (last hour)\nSELECT\n  job_id,\n  user_email,\n  total_bytes_processed / POW(1024, 3) AS tb_processed,\n  total_slot_ms / 1000 AS slot_seconds,\n  TIMESTAMP_DIFF(end_time, start_time, SECOND) AS wall_time_sec,\n  query\nFROM `region-us`.INFORMATION_SCHEMA.JOBS\nWHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)\n  AND state = 'DONE'\nORDER BY total_slot_ms DESC\nLIMIT 20;\n\n-- 2. Stage-level breakdown for a specific job\nSELECT\n  stage_id,\n  name AS stage_name,\n  status,\n  slot_ms,\n  records_read,\n  records_written,\n  shuffle_output_bytes\nFROM `region-us`.INFORMATION_SCHEMA.JOBS_BY_PROJECT,\n  UNNEST(job_stages) AS stage\nWHERE job_id = @target_job_id\nORDER BY slot_ms DESC;\n\n-- 3. Reservation utilization check\nSELECT\n  reservation_name,\n  SUM(total_slot_ms) / 1000 AS total_slot_sec,\n  COUNT(DISTINCT job_id) AS job_count\nFROM `region-us`.INFORMATION_SCHEMA.JOBS\nWHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)\nGROUP BY reservation_name\nORDER BY total_slot_sec DESC;"
+        }
+      ],
+      "meta_skill_routers": ["query_engine_orchestrator"],
+      "inputs": ["job_id", "project_id", "time_range"],
+      "outputs": ["diagnostic_report", "optimization_suggestions", "stage_breakdown"],
+      "last_updated": "2026-05-28",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "analyze_query_plan",
+      "name": "Analyze Query Plan",
+      "tier": 2,
+      "category": "query-diagnostics",
+      "owner": "query-optimization-team",
+      "description": "Deep-dive analysis of BigQuery query execution plans. Identifies shuffle bottlenecks, skewed stages, and suboptimal join strategies.",
+      "symptoms": ["skewed stages", "shuffle bottleneck", "suboptimal join"],
+      "documentation": "# Analyze Query Plan\n\nPerforms a detailed breakdown of a query execution plan to identify performance bottlenecks.\n\n## Capabilities\n\n- Stage-by-stage slot usage analysis\n- Shuffle volume and partition skew detection\n- Join strategy evaluation (broadcast vs. hash vs. sort-merge)\n- Recommended query rewrites\n\n## Usage\n\nProvide a `job_id` and this skill will pull the execution plan from `INFORMATION_SCHEMA` and generate a structured report.\n\n## Key Metrics\n\n| Metric | Healthy | Warning | Critical |\n|--------|---------|---------|----------|\n| Max stage skew ratio | < 2x | 2-5x | > 5x |\n| Shuffle bytes | < 1 GB | 1-10 GB | > 10 GB |\n| Stage count | < 20 | 20-50 | > 50 |",
+      "assets": [
+        {
+          "name": "plan_analyzer.py",
+          "type": "python",
+          "content": "\"\"\"Query plan analyzer for BigQuery jobs.\"\"\"\n\nimport json\nfrom typing import List, Dict, Any\n\n\ndef analyze_plan(job_stages: List[Dict[str, Any]]) -> Dict[str, Any]:\n    \"\"\"Analyze query plan stages for bottlenecks.\"\"\"\n    total_slot_ms = sum(s.get('slot_ms', 0) for s in job_stages)\n    max_slot_ms = max(s.get('slot_ms', 0) for s in job_stages)\n    \n    skew_ratio = max_slot_ms / (total_slot_ms / len(job_stages)) if job_stages else 0\n    \n    bottlenecks = []\n    for stage in job_stages:\n        if stage.get('slot_ms', 0) > total_slot_ms * 0.5:\n            bottlenecks.append({\n                'stage_id': stage['stage_id'],\n                'name': stage['name'],\n                'pct_of_total': stage['slot_ms'] / total_slot_ms * 100\n            })\n    \n    return {\n        'total_stages': len(job_stages),\n        'total_slot_ms': total_slot_ms,\n        'skew_ratio': round(skew_ratio, 2),\n        'health': 'critical' if skew_ratio > 5 else 'warning' if skew_ratio > 2 else 'healthy',\n        'bottleneck_stages': bottlenecks,\n    }"
+        }
+      ],
+      "meta_skill_routers": ["query_engine_orchestrator"],
+      "inputs": ["job_id", "project_id"],
+      "outputs": ["plan_analysis_report", "bottleneck_list", "rewrite_suggestions"],
+      "last_updated": "2026-05-15",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "check_slot_usage",
+      "name": "Check Slot Usage",
+      "tier": 1,
+      "category": "capacity",
+      "owner": "capacity-planning-pod",
+      "description": "Infrastructure-level monitoring of BigQuery slot utilization across reservations and projects.",
+      "symptoms": ["slot exhaustion", "reservation full", "queued queries"],
+      "documentation": "# Check Slot Usage\n\nMonitors and reports on BigQuery slot consumption across all reservations.\n\n## Features\n\n- Real-time slot utilization per reservation\n- Historical trend analysis (24h, 7d, 30d)\n- Alert threshold configuration\n- Capacity planning recommendations\n\n## Architecture\n\nThis skill queries the admin `INFORMATION_SCHEMA` views to aggregate slot usage data across projects assigned to each reservation.",
+      "assets": [
+        {
+          "name": "slot_monitor.sql",
+          "type": "sql",
+          "content": "-- Real-time slot utilization by reservation\nSELECT\n  reservation_name,\n  TIMESTAMP_TRUNC(period_start, MINUTE) AS minute,\n  AVG(slot_assigned) AS avg_slots_assigned,\n  AVG(slot_used) AS avg_slots_used,\n  SAFE_DIVIDE(AVG(slot_used), AVG(slot_assigned)) * 100 AS utilization_pct\nFROM `region-us`.INFORMATION_SCHEMA.RESERVATIONS_TIMELINE\nWHERE period_start > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 1 HOUR)\nGROUP BY reservation_name, minute\nORDER BY minute DESC;"
+        }
+      ],
+      "meta_skill_routers": ["query_engine_orchestrator", "capacity_orchestrator"],
+      "inputs": ["reservation_name", "time_window"],
+      "outputs": ["utilization_report", "trend_data", "alerts"],
+      "last_updated": "2026-06-01",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "debug_data_ingestion",
+      "name": "Debug Data Ingestion",
+      "tier": 3,
+      "category": "data-pipeline",
+      "owner": "data-eng-pod",
+      "description": "Troubleshooting playbook for failed or stalled data ingestion jobs, covering streaming inserts, load jobs, and DTS transfers.",
+      "symptoms": ["ingestion failure", "streaming insert errors", "load job failed", "data transfer stalled", "missing data"],
+      "documentation": "# Debug Data Ingestion\n\nComprehensive playbook for diagnosing data ingestion failures across all BigQuery ingestion methods.\n\n## Supported Ingestion Methods\n\n- **Streaming Inserts** — `tabledata.insertAll` API failures\n- **Load Jobs** — Batch load from GCS, local files\n- **Data Transfer Service** — Scheduled DTS transfers\n- **Storage Write API** — High-throughput streaming\n\n## Common Failure Modes\n\n1. Schema mismatch between source and destination\n2. Quota exceeded (streaming insert rate limits)\n3. GCS permissions or path errors for load jobs\n4. DTS connector configuration drift\n\n## Diagnostic Flow\n\n```\nStart\n  |\n  v\nIdentify ingestion method\n  |\n  +-- Streaming? --> Check quota, schema, error log\n  +-- Load job? --> Check GCS path, permissions, job status\n  +-- DTS? --> Check transfer config, run history\n  |\n  v\nCollect error details from INFORMATION_SCHEMA.JOBS\n  |\n  v\nGenerate diagnostic report\n```",
+      "assets": [
+        {
+          "name": "ingestion_checker.py",
+          "type": "python",
+          "content": "\"\"\"Data ingestion diagnostic tool.\"\"\"\n\nfrom google.cloud import bigquery\nfrom datetime import datetime, timedelta\n\n\ndef check_recent_failures(project_id: str, hours: int = 24) -> list:\n    \"\"\"Find recent ingestion job failures.\"\"\"\n    client = bigquery.Client(project=project_id)\n    \n    query = f\"\"\"\n    SELECT\n      job_id,\n      job_type,\n      error_result.reason AS error_reason,\n      error_result.message AS error_message,\n      creation_time,\n      destination_table.dataset_id,\n      destination_table.table_id\n    FROM `region-us`.INFORMATION_SCHEMA.JOBS\n    WHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL {hours} HOUR)\n      AND state = 'DONE'\n      AND error_result IS NOT NULL\n      AND job_type IN ('LOAD', 'COPY')\n    ORDER BY creation_time DESC\n    LIMIT 50\n    \"\"\"\n    \n    results = client.query(query).result()\n    return [dict(row) for row in results]"
+        },
+        {
+          "name": "ingestion_errors.sql",
+          "type": "sql",
+          "content": "-- Recent ingestion failures with error details\nSELECT\n  job_id,\n  job_type,\n  error_result.reason,\n  error_result.message,\n  destination_table.dataset_id,\n  destination_table.table_id,\n  total_bytes_processed,\n  creation_time\nFROM `region-us`.INFORMATION_SCHEMA.JOBS\nWHERE state = 'DONE'\n  AND error_result IS NOT NULL\n  AND job_type IN ('LOAD', 'COPY', 'EXTRACT')\n  AND creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 24 HOUR)\nORDER BY creation_time DESC;"
+        }
+      ],
+      "meta_skill_routers": ["data_pipeline_orchestrator"],
+      "inputs": ["project_id", "dataset_id", "ingestion_method"],
+      "outputs": ["failure_report", "root_cause", "remediation_steps"],
+      "last_updated": "2026-06-05",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "table_metadata_inspector",
+      "name": "Table Metadata Inspector",
+      "tier": 1,
+      "category": "metadata",
+      "owner": "data-catalog-team",
+      "description": "Inspects and reports on BigQuery table metadata including schema, partitioning configuration, clustering, and storage statistics.",
+      "symptoms": [],
+      "documentation": "# Table Metadata Inspector\n\nProvides comprehensive metadata inspection for BigQuery tables.\n\n## Capabilities\n\n- Schema extraction with field descriptions\n- Partitioning and clustering configuration\n- Storage breakdown (active, long-term, streaming buffer)\n- Row count and size estimates\n- Table creation and modification timestamps\n\n## Output Format\n\nReturns a structured JSON report with all metadata fields normalized for consumption by other skills.",
+      "assets": [
+        {
+          "name": "metadata_report.json",
+          "type": "json",
+          "content": "{\n  \"report_template\": {\n    \"table_ref\": {\n      \"project\": \"\",\n      \"dataset\": \"\",\n      \"table\": \"\"\n    },\n    \"schema\": {\n      \"fields\": [],\n      \"total_fields\": 0\n    },\n    \"partitioning\": {\n      \"type\": null,\n      \"field\": null,\n      \"expiration_ms\": null\n    },\n    \"clustering\": {\n      \"fields\": []\n    },\n    \"storage\": {\n      \"num_bytes\": 0,\n      \"num_rows\": 0,\n      \"num_long_term_bytes\": 0,\n      \"streaming_buffer\": null\n    }\n  }\n}"
+        }
+      ],
+      "meta_skill_routers": ["data_pipeline_orchestrator"],
+      "inputs": ["project_id", "dataset_id", "table_id"],
+      "outputs": ["metadata_report"],
+      "last_updated": "2026-04-20",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "cost_attribution",
+      "name": "Cost Attribution Analysis",
+      "tier": 2,
+      "category": "cost-management",
+      "owner": "finops-pod",
+      "description": "Attributes BigQuery compute and storage costs to teams, projects, and individual users for chargeback and showback reporting.",
+      "symptoms": ["unexpected costs", "cost spike", "budget exceeded"],
+      "documentation": "# Cost Attribution Analysis\n\nBreaks down BigQuery costs by team, project, user, and query pattern for financial accountability.\n\n## Cost Categories\n\n- **Compute (On-Demand):** Per-TB scanned pricing\n- **Compute (Flat-Rate):** Slot reservation costs\n- **Storage:** Active + long-term storage costs\n- **Streaming:** Streaming insert pricing\n\n## Reports Generated\n\n1. Daily cost summary by label/project\n2. Top-N cost contributors (users/queries)\n3. Month-over-month trend analysis\n4. Anomaly detection (> 2 std dev from rolling average)",
+      "assets": [
+        {
+          "name": "cost_breakdown.sql",
+          "type": "sql",
+          "content": "-- Daily cost breakdown by project and user\nWITH job_costs AS (\n  SELECT\n    DATE(creation_time) AS job_date,\n    project_id,\n    user_email,\n    SUM(total_bytes_billed) / POW(1024, 4) AS tb_billed,\n    SUM(total_bytes_billed) / POW(1024, 4) * 6.25 AS estimated_cost_usd,\n    COUNT(*) AS query_count\n  FROM `region-us`.INFORMATION_SCHEMA.JOBS\n  WHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)\n    AND job_type = 'QUERY'\n    AND state = 'DONE'\n  GROUP BY job_date, project_id, user_email\n)\nSELECT\n  job_date,\n  project_id,\n  user_email,\n  tb_billed,\n  estimated_cost_usd,\n  query_count\nFROM job_costs\nORDER BY estimated_cost_usd DESC\nLIMIT 100;"
+        }
+      ],
+      "meta_skill_routers": ["capacity_orchestrator"],
+      "inputs": ["project_id", "date_range", "cost_labels"],
+      "outputs": ["cost_report", "top_contributors", "anomaly_alerts"],
+      "last_updated": "2026-05-22",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "access_control_audit",
+      "name": "Access Control Audit",
+      "tier": 2,
+      "category": "security",
+      "owner": "security-pod",
+      "description": "Audits IAM policies, dataset-level permissions, and row/column-level security configurations across BigQuery resources.",
+      "symptoms": ["permission denied", "unauthorized access", "access audit"],
+      "documentation": "# Access Control Audit\n\nComprehensive audit of BigQuery access controls and security configurations.\n\n## Audit Scope\n\n- Project-level IAM bindings\n- Dataset-level access entries\n- Table-level ACLs\n- Row-level security policies\n- Column-level security (policy tags)\n- Authorized views and routines\n\n## Compliance Checks\n\n- Identifies overly permissive roles (e.g., `bigquery.admin` on production datasets)\n- Detects public datasets\n- Flags service accounts with excessive permissions",
+      "assets": [
+        {
+          "name": "audit_permissions.py",
+          "type": "python",
+          "content": "\"\"\"BigQuery access control auditor.\"\"\"\n\nfrom google.cloud import bigquery\nfrom google.cloud import resourcemanager_v3\n\n\ndef audit_dataset_access(project_id: str, dataset_id: str) -> dict:\n    \"\"\"Audit access entries for a dataset.\"\"\"\n    client = bigquery.Client(project=project_id)\n    dataset = client.get_dataset(f'{project_id}.{dataset_id}')\n    \n    entries = []\n    for entry in dataset.access_entries:\n        entries.append({\n            'role': entry.role,\n            'entity_type': entry.entity_type,\n            'entity_id': entry.entity_id,\n            'is_overly_permissive': entry.role in ('OWNER', 'WRITER') and\n                                    entry.entity_type == 'specialGroup'\n        })\n    \n    return {\n        'dataset': f'{project_id}.{dataset_id}',\n        'total_entries': len(entries),\n        'entries': entries,\n        'warnings': [e for e in entries if e['is_overly_permissive']]\n    }"
+        }
+      ],
+      "meta_skill_routers": ["security_orchestrator"],
+      "inputs": ["project_id", "dataset_id"],
+      "outputs": ["audit_report", "compliance_findings", "recommendations"],
+      "last_updated": "2026-05-10",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "schema_change_detector",
+      "name": "Schema Change Detector",
+      "tier": 1,
+      "category": "metadata",
+      "owner": "data-catalog-team",
+      "description": "Detects and reports schema changes across BigQuery tables, including field additions, deletions, type changes, and mode modifications.",
+      "symptoms": ["schema mismatch", "column missing", "type error"],
+      "documentation": "# Schema Change Detector\n\nMonitors BigQuery tables for schema drift and breaking changes.\n\n## Detection Types\n\n- Field additions (non-breaking)\n- Field deletions (breaking)\n- Type changes (breaking)\n- Mode changes (NULLABLE to REQUIRED, etc.)\n- Description updates (informational)\n\n## Integration\n\nDesigned to run on a schedule (daily) and emit alerts for breaking changes. Stores schema snapshots for historical comparison.",
+      "assets": [
+        {
+          "name": "schema_diff.py",
+          "type": "python",
+          "content": "\"\"\"Schema change detection for BigQuery tables.\"\"\"\n\nfrom typing import List, Dict\n\n\ndef diff_schemas(old_schema: List[Dict], new_schema: List[Dict]) -> Dict:\n    \"\"\"Compare two schema definitions and return differences.\"\"\"\n    old_fields = {f['name']: f for f in old_schema}\n    new_fields = {f['name']: f for f in new_schema}\n    \n    added = [f for name, f in new_fields.items() if name not in old_fields]\n    removed = [f for name, f in old_fields.items() if name not in new_fields]\n    \n    modified = []\n    for name in set(old_fields) & set(new_fields):\n        if old_fields[name] != new_fields[name]:\n            modified.append({\n                'field': name,\n                'old': old_fields[name],\n                'new': new_fields[name]\n            })\n    \n    has_breaking = len(removed) > 0 or any(\n        m['old'].get('type') != m['new'].get('type') for m in modified\n    )\n    \n    return {\n        'added': added,\n        'removed': removed,\n        'modified': modified,\n        'has_breaking_changes': has_breaking,\n        'severity': 'critical' if has_breaking else 'info'\n    }"
+        }
+      ],
+      "meta_skill_routers": ["data_pipeline_orchestrator"],
+      "inputs": ["project_id", "dataset_id", "table_id"],
+      "outputs": ["schema_diff_report", "breaking_changes", "alerts"],
+      "last_updated": "2026-06-08",
+      "has_skill_md": true,
+      "has_example_queries": false
+    },
+    {
+      "id": "partition_optimizer",
+      "name": "Partition Optimizer",
+      "tier": 2,
+      "category": "optimization",
+      "owner": "query-optimization-team",
+      "description": "Analyzes table access patterns and recommends optimal partitioning and clustering strategies to reduce query costs and improve performance.",
+      "symptoms": ["full table scan", "expensive query", "missing partition filter"],
+      "documentation": "# Partition Optimizer\n\nRecommends partitioning and clustering configurations based on actual query access patterns.\n\n## Analysis Process\n\n1. Collect query history for target tables (30-day window)\n2. Extract WHERE clause patterns and JOIN keys\n3. Estimate cost savings from different partitioning strategies\n4. Generate implementation DDL\n\n## Strategies Evaluated\n\n- Time-based partitioning (DAY, HOUR, MONTH, YEAR)\n- Integer range partitioning\n- Clustering (up to 4 columns)\n- Combined partitioning + clustering",
+      "assets": [
+        {
+          "name": "optimizer.py",
+          "type": "python",
+          "content": "\"\"\"Partition and clustering optimizer.\"\"\"\n\nfrom google.cloud import bigquery\n\n\ndef recommend_partitioning(project_id: str, dataset_id: str, table_id: str) -> dict:\n    \"\"\"Analyze query patterns and recommend partitioning.\"\"\"\n    client = bigquery.Client(project=project_id)\n    \n    # Analyze recent queries touching this table\n    query = f\"\"\"\n    SELECT\n      query,\n      total_bytes_processed,\n      total_bytes_billed\n    FROM `region-us`.INFORMATION_SCHEMA.JOBS\n    WHERE state = 'DONE'\n      AND job_type = 'QUERY'\n      AND SEARCH(query, '{dataset_id}.{table_id}')\n      AND creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)\n    LIMIT 1000\n    \"\"\"\n    \n    results = list(client.query(query).result())\n    \n    return {\n        'table': f'{project_id}.{dataset_id}.{table_id}',\n        'queries_analyzed': len(results),\n        'total_bytes_scanned': sum(r.total_bytes_processed for r in results),\n        'recommendations': [\n            'Consider time-based partitioning on date column',\n            'Add clustering on frequently filtered columns'\n        ]\n    }"
+        }
+      ],
+      "meta_skill_routers": ["query_engine_orchestrator"],
+      "inputs": ["project_id", "dataset_id", "table_id"],
+      "outputs": ["partitioning_recommendation", "clustering_recommendation", "estimated_savings"],
+      "last_updated": "2026-05-18",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "reservation_manager",
+      "name": "Reservation Manager",
+      "tier": 1,
+      "category": "capacity",
+      "owner": "capacity-planning-pod",
+      "description": "Infrastructure component for managing BigQuery reservations, assignments, and capacity commitments programmatically.",
+      "symptoms": [],
+      "documentation": "# Reservation Manager\n\nProgrammatic management of BigQuery capacity reservations.\n\n## Operations\n\n- List all reservations and their current assignments\n- Check commitment utilization rates\n- Recommend right-sizing based on usage patterns\n- Generate reports for capacity planning reviews",
+      "assets": [
+        {
+          "name": "reservations_overview.sql",
+          "type": "sql",
+          "content": "-- Reservation overview with utilization\nSELECT\n  reservation_name,\n  slot_capacity,\n  ignore_idle_slots,\n  creation_time,\n  update_time\nFROM `region-us`.INFORMATION_SCHEMA.RESERVATIONS\nORDER BY slot_capacity DESC;"
+        }
+      ],
+      "meta_skill_routers": ["capacity_orchestrator"],
+      "inputs": ["admin_project_id", "region"],
+      "outputs": ["reservation_list", "utilization_report"],
+      "last_updated": "2026-04-15",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "data_freshness_monitor",
+      "name": "Data Freshness Monitor",
+      "tier": 2,
+      "category": "data-pipeline",
+      "owner": "data-eng-pod",
+      "description": "Monitors data freshness by tracking the latest timestamps in key tables and alerting when data falls behind expected SLAs.",
+      "symptoms": ["stale data", "data delay", "missing recent data", "SLA breach"],
+      "documentation": "# Data Freshness Monitor\n\nEnsures data pipelines deliver data within defined SLA windows.\n\n## How It Works\n\n1. Define freshness expectations per table (e.g., \"max 2 hours behind\")\n2. Query the MAX timestamp column in each monitored table\n3. Compare against current time\n4. Alert if freshness exceeds threshold\n\n## Configuration\n\nExpects a JSON config defining monitored tables and their SLA thresholds.",
+      "assets": [],
+      "meta_skill_routers": ["data_pipeline_orchestrator"],
+      "inputs": ["project_id", "monitoring_config"],
+      "outputs": ["freshness_report", "sla_violations"],
+      "last_updated": "2026-06-03",
+      "has_skill_md": false,
+      "has_example_queries": false
+    },
+    {
+      "id": "incident_response_runbook",
+      "name": "Incident Response Runbook",
+      "tier": 3,
+      "category": "incident-management",
+      "owner": "sre-routing-pod",
+      "description": "Structured incident response playbook for BigQuery service disruptions, including outage triage, impact assessment, and communication templates.",
+      "symptoms": ["service outage", "503 error", "API unavailable", "bigquery down"],
+      "documentation": "# Incident Response Runbook\n\nStep-by-step guide for responding to BigQuery service incidents.\n\n## Severity Classification\n\n| Severity | Impact | Response Time |\n|----------|--------|---------------|\n| P0 | Complete service outage | Immediate |\n| P1 | Partial outage, major feature broken | < 15 min |\n| P2 | Degraded performance | < 1 hour |\n| P3 | Minor issue, workaround available | < 4 hours |\n\n## Response Steps\n\n1. **Acknowledge** — Claim the incident in the tracking system\n2. **Assess** — Determine severity and blast radius\n3. **Communicate** — Send initial status update\n4. **Mitigate** — Apply immediate fixes or workarounds\n5. **Resolve** — Implement permanent fix\n6. **Postmortem** — Document timeline and lessons learned",
+      "assets": [
+        {
+          "name": "impact_assessment.sql",
+          "type": "sql",
+          "content": "-- Assess impact: jobs affected during incident window\nSELECT\n  COUNT(*) AS total_jobs,\n  COUNTIF(state = 'DONE' AND error_result IS NOT NULL) AS failed_jobs,\n  COUNTIF(state = 'RUNNING') AS stuck_jobs,\n  COUNT(DISTINCT user_email) AS affected_users,\n  COUNT(DISTINCT project_id) AS affected_projects\nFROM `region-us`.INFORMATION_SCHEMA.JOBS\nWHERE creation_time BETWEEN @incident_start AND @incident_end;"
+        }
+      ],
+      "meta_skill_routers": ["security_orchestrator"],
+      "inputs": ["incident_id", "severity", "incident_start_time"],
+      "outputs": ["impact_report", "status_update", "postmortem_template"],
+      "last_updated": "2026-06-07",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "materialized_view_advisor",
+      "name": "Materialized View Advisor",
+      "tier": 2,
+      "category": "optimization",
+      "owner": "query-optimization-team",
+      "description": "Identifies candidate queries for materialized views based on frequency, cost, and pattern analysis.",
+      "symptoms": ["repeated expensive query", "dashboard slow"],
+      "documentation": "# Materialized View Advisor\n\nAnalyzes query history to recommend materialized views that would reduce cost and latency.\n\n## Candidate Criteria\n\n- Query runs more than 5 times per day\n- Total daily bytes scanned > 100 GB\n- Query pattern is deterministic (no volatile functions)\n- Source tables are partitioned\n\n## Savings Estimation\n\nEstimates cost savings based on:\n- Current on-demand scan costs\n- Materialized view refresh costs\n- Storage delta",
+      "assets": [
+        {
+          "name": "mv_candidates.sql",
+          "type": "sql",
+          "content": "-- Find candidate queries for materialized views\nWITH query_patterns AS (\n  SELECT\n    FARM_FINGERPRINT(query) AS query_hash,\n    ANY_VALUE(query) AS sample_query,\n    COUNT(*) AS execution_count,\n    SUM(total_bytes_billed) / POW(1024, 4) AS total_tb_billed,\n    AVG(TIMESTAMP_DIFF(end_time, start_time, SECOND)) AS avg_duration_sec\n  FROM `region-us`.INFORMATION_SCHEMA.JOBS\n  WHERE creation_time > TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 7 DAY)\n    AND job_type = 'QUERY'\n    AND state = 'DONE'\n  GROUP BY query_hash\n)\nSELECT\n  query_hash,\n  execution_count,\n  total_tb_billed,\n  avg_duration_sec,\n  total_tb_billed * 6.25 AS estimated_weekly_cost,\n  LEFT(sample_query, 500) AS sample_query\nFROM query_patterns\nWHERE execution_count > 35  -- ~5/day\n  AND total_tb_billed > 0.7  -- 100GB/day * 7 days\nORDER BY estimated_weekly_cost DESC\nLIMIT 20;"
+        }
+      ],
+      "meta_skill_routers": ["query_engine_orchestrator"],
+      "inputs": ["project_id", "date_range"],
+      "outputs": ["candidate_list", "savings_estimate", "create_mv_ddl"],
+      "last_updated": "2026-05-25",
+      "has_skill_md": true,
+      "has_example_queries": true
+    },
+    {
+      "id": "encryption_compliance_check",
+      "name": "Encryption Compliance Check",
+      "tier": 1,
+      "category": "security",
+      "owner": "security-pod",
+      "description": "Verifies that BigQuery datasets and tables comply with encryption requirements, including CMEK configuration validation.",
+      "symptoms": ["encryption not configured", "CMEK missing"],
+      "documentation": "# Encryption Compliance Check\n\nValidates encryption configuration across BigQuery resources.\n\n## Checks Performed\n\n- Default encryption key set on datasets\n- CMEK configuration on individual tables\n- Key rotation status and schedule\n- Cross-region key usage validation",
+      "assets": [],
+      "meta_skill_routers": ["security_orchestrator"],
+      "inputs": ["project_id"],
+      "outputs": ["compliance_report", "non_compliant_resources"],
+      "last_updated": "2026-03-30",
+      "has_skill_md": false,
+      "has_example_queries": false
+    }
+  ],
+  "meta_skill_routers": [
+    {
+      "id": "query_engine_orchestrator",
+      "name": "Query Engine Orchestrator",
+      "description": "Routes incoming query performance and optimization issues to the appropriate diagnostic or optimization skill.",
+      "sub_skills": ["investigate_slow_query", "analyze_query_plan", "check_slot_usage", "partition_optimizer", "materialized_view_advisor"]
+    },
+    {
+      "id": "data_pipeline_orchestrator",
+      "name": "Data Pipeline Orchestrator",
+      "description": "Manages data ingestion, freshness monitoring, and schema management workflows across the data platform.",
+      "sub_skills": ["debug_data_ingestion", "table_metadata_inspector", "schema_change_detector", "data_freshness_monitor"]
+    },
+    {
+      "id": "capacity_orchestrator",
+      "name": "Capacity Orchestrator",
+      "description": "Coordinates capacity planning, cost management, and reservation optimization across BigQuery infrastructure.",
+      "sub_skills": ["check_slot_usage", "cost_attribution", "reservation_manager"]
+    },
+    {
+      "id": "security_orchestrator",
+      "name": "Security Orchestrator",
+      "description": "Orchestrates security audits, access control reviews, encryption compliance, and incident response workflows.",
+      "sub_skills": ["access_control_audit", "encryption_compliance_check", "incident_response_runbook"]
+    }
+  ]
+}

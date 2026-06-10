@@ -1,0 +1,107 @@
+/* ============================================
+   BQ Skill Explorer — Search Dropdown
+   ============================================ */
+
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-8));
+  left: 0;
+  right: 0;
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--elevation-3);
+  max-height: 480px;
+  overflow-y: auto;
+  z-index: var(--z-dropdown);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  pointer-events: none;
+}
+
+.search-dropdown--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.search-dropdown__group {
+  padding: var(--space-8) 0;
+}
+
+.search-dropdown__group + .search-dropdown__group {
+  border-top: 1px solid var(--border-color-light);
+}
+
+.search-dropdown__group-label {
+  padding: var(--space-4) var(--space-16);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--on-surface-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.search-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-16);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.search-dropdown__item:hover,
+.search-dropdown__item--focused {
+  background-color: var(--surface-variant);
+}
+
+.search-dropdown__item-icon {
+  font-size: 20px;
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
+}
+
+.search-dropdown__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-dropdown__item-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-dropdown__item-context {
+  font-size: var(--font-size-xs);
+  color: var(--on-surface-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: var(--space-2);
+}
+
+.search-dropdown__footer {
+  padding: var(--space-8) var(--space-16);
+  border-top: 1px solid var(--border-color-light);
+  text-align: center;
+}
+
+.search-dropdown__footer-link {
+  font-size: var(--font-size-sm);
+  color: var(--google-blue);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.search-dropdown__empty {
+  padding: var(--space-24);
+  text-align: center;
+  color: var(--on-surface-muted);
+  font-size: var(--font-size-md);
+}

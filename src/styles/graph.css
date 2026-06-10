@@ -1,0 +1,185 @@
+/* ============================================
+   BQ Skill Explorer — Graph View
+   ============================================ */
+
+.graph-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.graph-view__svg {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.graph-view__svg:active {
+  cursor: grabbing;
+}
+
+/* Nodes */
+.graph-node {
+  cursor: pointer;
+  transition: filter var(--transition-fast);
+}
+
+.graph-node:hover {
+  filter: brightness(1.1);
+}
+
+.graph-node__circle--orchestrator {
+  fill: var(--google-blue);
+  stroke: var(--google-blue-hover);
+  stroke-width: 2;
+}
+
+.graph-node__circle--skill {
+  fill: var(--google-green);
+  stroke: #2d9249;
+  stroke-width: 1.5;
+}
+
+.graph-node__label {
+  font-family: var(--font-primary);
+  font-size: 11px;
+  fill: var(--on-surface);
+  text-anchor: middle;
+  pointer-events: none;
+  font-weight: 500;
+}
+
+/* Edges */
+.graph-edge {
+  stroke: var(--border-color);
+  stroke-width: 1.5;
+  fill: none;
+  opacity: 0.6;
+}
+
+.graph-edge--animated {
+  stroke-dasharray: 8, 4;
+  animation: dashFlow 1.5s linear infinite;
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+/* Tooltip */
+.graph-tooltip {
+  position: absolute;
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--space-12) var(--space-16);
+  box-shadow: var(--elevation-3);
+  pointer-events: none;
+  z-index: var(--z-dropdown);
+  max-width: 280px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.graph-tooltip--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.graph-tooltip__name {
+  font-weight: 600;
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-4);
+}
+
+.graph-tooltip__desc {
+  font-size: var(--font-size-sm);
+  color: var(--on-surface-variant);
+  line-height: var(--line-height-normal);
+}
+
+.graph-tooltip__type {
+  display: inline-block;
+  margin-top: var(--space-8);
+}
+
+/* Legend */
+.graph-legend {
+  position: absolute;
+  bottom: var(--space-24);
+  left: var(--space-24);
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-16);
+  box-shadow: var(--elevation-2);
+}
+
+.graph-legend__title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--space-12);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.graph-legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+  font-size: var(--font-size-sm);
+}
+
+.graph-legend__item:last-child {
+  margin-bottom: 0;
+}
+
+.graph-legend__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--border-radius-full);
+}
+
+.graph-legend__dot--orchestrator {
+  background-color: var(--google-blue);
+}
+
+.graph-legend__dot--skill {
+  background-color: var(--google-green);
+}
+
+/* Controls */
+.graph-controls {
+  position: absolute;
+  top: var(--space-24);
+  right: var(--space-24);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.graph-controls__btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  box-shadow: var(--elevation-1);
+  transition: background-color var(--transition-fast);
+  color: var(--on-surface-variant);
+}
+
+.graph-controls__btn:hover {
+  background-color: var(--surface-variant);
+}

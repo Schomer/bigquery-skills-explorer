@@ -1,0 +1,94 @@
+/* ============================================
+   BQ Skill Explorer — TopBar Styles
+   ============================================ */
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  height: var(--topbar-height);
+  padding: 0 var(--space-16);
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--border-color);
+  gap: var(--space-16);
+}
+
+.top-bar__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  min-width: 220px;
+  padding-left: var(--space-4);
+}
+
+.top-bar__logo-icon {
+  color: var(--google-blue);
+  font-size: 28px;
+}
+
+.top-bar__title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--on-surface);
+  white-space: nowrap;
+}
+
+.top-bar__search {
+  flex: 1;
+  max-width: 720px;
+  position: relative;
+}
+
+.top-bar__search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  background-color: var(--surface-variant);
+  border-radius: var(--border-radius-full);
+  padding: var(--space-8) var(--space-16);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.top-bar__search-input-wrapper:focus-within {
+  background-color: var(--surface);
+  border-color: var(--google-blue);
+  box-shadow: var(--elevation-2);
+}
+
+.top-bar__search-icon {
+  color: var(--on-surface-variant);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.top-bar__search-input {
+  width: 100%;
+  font-size: var(--font-size-md);
+  color: var(--on-surface);
+  line-height: 24px;
+}
+
+.top-bar__search-input::placeholder {
+  color: var(--on-surface-muted);
+}
+
+.top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-left: auto;
+}
+
+.top-bar__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--border-radius-full);
+  background-color: var(--google-blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: default;
+}
